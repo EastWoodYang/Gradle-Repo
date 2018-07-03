@@ -33,7 +33,7 @@ Gradle Repo is a tool that built on top of Git. it helps us manage the many Git 
         apply plugin: 'gradle-repo-build'
         
 3. Create repo.xml in root Project, and describes the structure and dependency tree of your project.
-<img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
+    <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
 
 
 ## repo.xml Manifest Format
@@ -97,3 +97,5 @@ Chile Element Node Name must match the name [Gradle Dependency Configurations](h
 Provides an action which allow you sync and bind remote origin repository when you modified repo.xml.
 
 <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/2.png'/>
+ 
+<img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/3.png'/>
