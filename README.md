@@ -1,6 +1,11 @@
 # Gradle Repo
 Gradle Repo is a tool that built on top of Git. it helps us manage the many Git repositories, and very convenient and quick to switch to other feature branches.
 
+## Features
+* No other tools required
+* Clone root project and opened by android studio or Gradle sync, will clone other git repositories automatically.
+* very convenient and quick to switch to other feature branches.
+
 ## Usage
 1. Add gradle repo plugin in root project **settings.gradle** and apply plugin **gradle-repo-settings**
 
