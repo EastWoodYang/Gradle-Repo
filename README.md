@@ -73,6 +73,6 @@
 
 
 ## Gradle Repo plugin for Android Studio
-Provides an action which allow you sync and remote origin repository when you modified repo.xml.
+Provides an action which allow you sync and bind remote origin repository when you modified repo.xml.
 
 <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
