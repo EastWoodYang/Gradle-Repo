@@ -1,15 +1,11 @@
-includeBuild 'gradle-repo-plugin'
-
 buildscript {
 
     repositories {
         jcenter()
         google()
-        maven { url "http://nexus.yingyingwork.com/content/repositories/android-dev/" }
-        maven { url "http://nexus.yingyingwork.com/content/repositories/android-release/" }
     }
     dependencies {
-        classpath 'com.winwin.common:gradle-repo-plugin-test:1.0.32-SNAPSHOT'
+        classpath 'com.eastwood.tools.plugins:gradle-repo:1.0.0'
     }
 }
 
