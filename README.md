@@ -100,3 +100,31 @@ Provides an action which allow you sync and bind remote origin repository when y
 <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/2.png'/>
  
 <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/3.png'/>
+
+
+## QA
+
+**Still need add "include ':project'" in settings.gradle ?**
+
+    No longer needed, repo plugin will dynamic add the given module you declared in repo.xml to the build.
+    
+**How to switch to other feature branches ?**
+
+    You only need to change the name of the element project branch and sync, make sure to commit the code before syncing.
+
+## License
+```
+   Copyright 2018 EastWood Yang
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+```
