@@ -1,6 +1,11 @@
 # Gradle Repo
+Gradle Repo is a tool that we built on top of Git. it helps us manage the many Git repositories, very convenient to switch to other feature branches.
 
-## repo.xml
+
+## Repo Manifest
+A repo manifest describes the structure and dependency tree of a repo project; that is
+the directories that are visible and where they should be obtained from with git. 
+##### repo manifest sample
 
     <?xml version='1.0' encoding='UTF-8'?>
     <manifest>
@@ -14,12 +19,13 @@
      
         <module name="app" origin="./gradle-repo-app.git">
             <dependencies>
-                <api name="mylibrary"/>
                 <api name="mylibrary2"/>
+                <implementation name="mylibrary"/>
+                <apiDebug name="mylibrary"/>
             </dependencies>
         </module>
      
-        <module name="mylibrary" origin="./gradle-repo-mylibrary.git"/>
+        <module name="mylibrary" origin="https://github.com/EastWoodYang/gradle-repo-mylibrary.git"/>
      
         <module name="mylibrary2" origin="./gradle-repo-mylibrary2.git"/>
      
@@ -27,50 +33,30 @@
      
     </manifest>
 
-#### \<project /> 元素
-用于描述**root**工程的相关配置。
+##### Element project
+describe root project.
 
-- **origin** 远程仓库地址
-    
-    未绑定远程仓库前，该值可缺省。
-    
-- **branch** 当前分支
-    
-    可缺省，默认为 *master*。
-    
-#### \<module /> 元素
-用于描述各个模块的相关配置。
+- Attribute `origin`: A git url of this project obtain from with git. 
+- Attribute `branch`: Name of the Git branch the manifest wants to track for this module. If not supplied the branch given by the project element is used if applicable.
+  
+##### Element module
+describe modules for this project.
 
-- **name** 模块名称
+- Attribute `name`: A unique name for this module. The module name must match the directory name of this module.
+- Attribute `local`: An optional path relative to the top directory of the repo client where the Git working directory for this project should be placed. If not supplied the top directory path is used.
+- Attribute `origin`: A git url of this module obtain from with git.
+- Attribute `branch`: Name of the Git branch the manifest wants to track for this module. If not supplied the branch given by the project element is used if applicable.
     
-    不可缺省，需与模块文件夹名称保存一致。
-    
-- **local** 本地路径
-    
-    所有模块必须位于工程根目录下。可缺省，默认为根目录。该值须为根目录的相对路径。
+##### Element include
+Define which module and the project are in the same repository.
 
-- **origin** 远程仓库地址
-    
-    未绑定远程仓库前，该值可缺省。
-    
-- **branch** 当前分支
-    
-    可缺省，**默认同 \<project /> 元素的branch**。
-    
-#### \<include /> 元素
-用于描述哪些模块与**root**工程同一个代码仓库。
+- Attribute `name`: The value must match the element module name.
 
-- **name** 模块名称
-    
-    该值取自 \<module /> 元素的name值
+##### Element dependencies
+Declaring dependencies to a module
 
-#### \<dependencies />元素
-用于描述该模块依赖与哪些模块。
-
-- **name** 模块名称
-
-    该值取自 \<module /> 元素的name值
-
+Chile Element Node Name must match the name [Gradle Dependency Configurations](https://docs.gradle.org/current/userguide/managing_dependency_configurations.html).
+- Attribute `name`: The value must match the element module name.
 
 ## Gradle Repo plugin for Android Studio
 Provides an action which allow you sync and bind remote origin repository when you modified repo.xml.
