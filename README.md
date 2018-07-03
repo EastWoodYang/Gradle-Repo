@@ -1,33 +1,31 @@
 # Gradle Repo
 
 ## repo.xml
-```
-<?xml version='1.0' encoding='UTF-8'?>
-<manifest>
- 
-    <project
-        origin="git@git.yingyinglicai.net:mobile/android/common/simple.git"
-        branch="master" >
- 
-        <include name="app" />
- 
-    </project>
- 
-    <module name="app" >
 
-        <dependencies>
-            <api name="module"/>
-        </dependencies>
-
-    </module>
-    
-    <module name="module"
-        local="common"
-        origin="git@git.yingyinglicai.net:mobile/android/common/module.git"
-        branch="master" />
- 
-</manifest>
-```
+    <?xml version='1.0' encoding='UTF-8'?>
+    <manifest>
+     
+        <project origin="https://github.com/EastWoodYang/gradle-repo.git"
+            branch="master" >
+     
+            <include name="mylibrary3"/>
+     
+        </project>
+     
+        <module name="app" origin="./gradle-repo-app.git">
+            <dependencies>
+                <api name="mylibrary"/>
+                <api name="mylibrary2"/>
+            </dependencies>
+        </module>
+     
+        <module name="mylibrary" origin="./gradle-repo-mylibrary.git"/>
+     
+        <module name="mylibrary2" origin="./gradle-repo-mylibrary2.git"/>
+     
+        <module name="mylibrary3" />
+     
+    </manifest>
 
 #### \<project /> 元素
 用于描述**root**工程的相关配置。
