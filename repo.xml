@@ -8,7 +8,7 @@
 
     </project>
 
-    <module name="app" origin="./gradle-repo-plugin-app-dev.git">
+    <module name="app" origin="./gradle-repo-app.git">
 
         <dependencies>
             <api name="mylibrary"/>
@@ -17,9 +17,9 @@
 
     </module>
 
-    <module name="mylibrary" origin="./gradle-repo-plugin-mylibrary-dev.git"/>
+    <module name="mylibrary" origin="./gradle-repo-mylibrary.git"/>
 
-    <module name="mylibrary2" origin="./gradle-repo-plugin-mylibrary2-dev.git"/>
+    <module name="mylibrary2" origin="./gradle-repo-mylibrary2.git"/>
 
     <module name="mylibrary3" />
 
