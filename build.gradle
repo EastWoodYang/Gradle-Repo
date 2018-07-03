@@ -5,8 +5,6 @@ buildscript {
     repositories {
         google()
         jcenter()
-        maven { url "http://nexus.yingyingwork.com/content/repositories/android-dev/" }
-        maven { url "http://nexus.yingyingwork.com/content/repositories/android-release/" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
