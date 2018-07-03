@@ -33,6 +33,7 @@ Gradle Repo is a tool that built on top of Git. it helps us manage the many Git 
         apply plugin: 'gradle-repo-build'
         
 3. Create repo.xml in root Project, and describes the structure and dependency tree of your project.
+
     <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
 
 
