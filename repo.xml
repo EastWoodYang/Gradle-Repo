@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<manifest>
+
+    <project origin="https://github.com/EastWoodYang/gradle-repo.git"
+        branch="master" >
+
+        <include name="mylibrary3"/>
+
+    </project>
+
+    <module name="app" origin="./gradle-repo-plugin-app-dev.git">
+
+        <dependencies>
+            <api name="mylibrary"/>
+            <api name="mylibrary2"/>
+        </dependencies>
+
+    </module>
+
+    <module name="mylibrary" origin="./gradle-repo-plugin-mylibrary-dev.git"/>
+
+    <module name="mylibrary2" origin="./gradle-repo-plugin-mylibrary2-dev.git"/>
+
+    <module name="mylibrary3" />
+
+</manifest>
