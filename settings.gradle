@@ -1,8 +1,6 @@
 buildscript {
-
     repositories {
         jcenter()
-        google()
     }
     dependencies {
         classpath 'com.eastwood.tools.plugins:gradle-repo:1.0.0'
