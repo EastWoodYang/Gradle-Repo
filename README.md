@@ -3,7 +3,7 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
 
 ## Features
 * No other tools required.
-* Clone the root project and open it by android studio, Will automatically clone the code of other projects.
+* Clone the root project and open it by android studio, will automatically clone the code of other projects.
 * very convenient and quick to switch to other feature branches.
 
 ## Usage
@@ -114,7 +114,7 @@ Provides an action which allow you sync and bind remote origin repository when y
 
 **Still need to include project in settings.gradle ?**
 
-    No longer needed, plugin will dynamic add the given module you declared in repo.xml to the build.
+    No longer needed, will automatically add the given module you declared in repo.xml to the build by repo plugin.
     
 **How to switch to other feature branches ?**
 
