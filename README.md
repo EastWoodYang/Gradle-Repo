@@ -2,12 +2,12 @@
 Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, and very convenient and quick to switch to other feature branches.
 
 ## Features
-* No other tools required
-* Clone root project and opened by android studio or Gradle sync, will clone other git repositories automatically.
+* No other tools required.
+* Clone the root project and open it by android studio, Will automatically clone the code of other projects.
 * very convenient and quick to switch to other feature branches.
 
 ## Usage
-1. Add gradle repo plugin in root project **settings.gradle** and apply plugin **gradle-repo-settings**
+1. Add buildscript dependency in root project **settings.gradle** and apply plugin **gradle-repo-settings**
 
         buildscript {
             repositories {
@@ -20,7 +20,7 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
          
         apply plugin: 'gradle-repo-settings'
 
-2. Add gradle repo plugin in root project **build.gradle** and apply plugin **gradle-repo-build**
+2. Add buildscript dependency in root project **build.gradle** and apply plugin **gradle-repo-build**
     
         buildscript {
             
@@ -37,14 +37,14 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
         
         apply plugin: 'gradle-repo-build'
         
-3. Create repo.xml in root Project, and describes the structure and dependency tree of your project.
+3. Create repo.xml in root project, and describes the structure and dependency tree of your project.
 
     <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
 
 
 ## repo.xml Manifest Format
-A repo manifest describes the structure and dependency tree of a repo project; that is
-the directories that are visible and where they should be obtained from with git. 
+A repo manifest describes the structure and dependency of a repo project; that is
+the directories that are visible and where they should be obtained from with git.
 
 ##### repo manifest sample
 
@@ -75,25 +75,28 @@ the directories that are visible and where they should be obtained from with git
     </manifest>
 
 ##### Element project
-describe root project.
+At most one project must be specified.
 
-- Attribute `origin`: A git url of this project obtain from with git. 
+- Attribute `origin`: Specify the URL of a Git repository. 
 - Attribute `branch`: Name of the Git branch the manifest wants to track for this module. If not supplied the branch given by the project element is used if applicable.
   
 ##### Element module
-describe modules for this project.
+One or more project elements may be specified.
+Each element describes a single Git repository to be cloned into the repo project workspace.
 
 - Attribute `name`: A unique name for this module. The module name must match the directory name of this module.
 - Attribute `local`: An optional path relative to the top directory of the repo client where the Git working directory for this project should be placed. If not supplied the top directory path is used.
-- Attribute `origin`: A git url of this module obtain from with git.
+- Attribute `origin`: Specify the URL of a Git repository. Support path relative to the project element.
 - Attribute `branch`: Name of the Git branch the manifest wants to track for this module. If not supplied the branch given by the project element is used if applicable.
     
 ##### Element include
-Define which module and the project are in the same repository.
+Zero or more include elements may be specified as children of a project element.
+Define which module and the root project are in the same repository.
 
 - Attribute `name`: The value must match the element module name.
 
 ##### Element dependencies
+At most one project may be specified.
 Declaring dependencies to a module
 
 Chile Element Node Name must match the name [Gradle Dependency Configurations](https://docs.gradle.org/current/userguide/managing_dependency_configurations.html) identified.
@@ -109,13 +112,15 @@ Provides an action which allow you sync and bind remote origin repository when y
 
 ## QA
 
-**Still need to include project paths in settings.gradle ?**
+**Still need to include project in settings.gradle ?**
 
-    No longer needed, repo plugin will dynamic add the given module you declared in repo.xml to the build.
+    No longer needed, plugin will dynamic add the given module you declared in repo.xml to the build.
     
 **How to switch to other feature branches ?**
 
-    You only need to change the name of the element project branch and sync, make sure to commit the code before syncing.
+    You only need to change the name of the project element branch, and then sync it. 
+    
+    Make sure to commit the code before syncing.
 
 ## License
 ```
