@@ -9,12 +9,10 @@
     </project>
 
     <module name="app" origin="./gradle-repo-app.git">
-
         <dependencies>
             <api name="mylibrary"/>
             <api name="mylibrary2"/>
         </dependencies>
-
     </module>
 
     <module name="mylibrary" origin="./gradle-repo-mylibrary.git"/>

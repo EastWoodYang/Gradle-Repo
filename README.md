@@ -1,7 +1,5 @@
 # Gradle Repo
 
-
-
 ## repo.xml
 ```
 <?xml version='1.0' encoding='UTF-8'?>
@@ -74,3 +72,8 @@
 - **name** 模块名称
 
     该值取自 \<module /> 元素的name值
+
+
+## Gradle Repo plugin for Android Studio
+Provides an action which allow you sync and remote origin repository when you modified repo.xml.
+<img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
