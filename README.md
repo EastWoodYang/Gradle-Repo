@@ -9,7 +9,7 @@
         origin="git@git.yingyinglicai.net:mobile/android/common/simple.git"
         branch="master" >
  
-        <include module="app" />
+        <include name="app" />
  
     </project>
  
@@ -62,7 +62,7 @@
 #### \<include /> 元素
 用于描述哪些模块与**root**工程同一个代码仓库。
 
-- **module** 模块名称
+- **name** 模块名称
     
     该值取自 \<module /> 元素的name值
 
