@@ -1,5 +1,5 @@
 # Gradle Repo
-Gradle Repo is a tool that built on top of Git. it helps us manage the many Git repositories, and very convenient and quick to switch to other feature branches.
+Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, and very convenient and quick to switch to other feature branches.
 
 ## Features
 * No other tools required
