@@ -104,7 +104,7 @@ Provides an action which allow you sync and bind remote origin repository when y
 
 ## QA
 
-**Still need include project paths in settings.gradle ?**
+**Still need to include project paths in settings.gradle ?**
 
     No longer needed, repo plugin will dynamic add the given module you declared in repo.xml to the build.
     
