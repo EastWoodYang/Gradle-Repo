@@ -37,7 +37,7 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
         
         apply plugin: 'gradle-repo-build'
         
-3. Create repo.xml in root project, and describes the structure and dependency tree of your project.
+3. Create repo.xml in root project, and describes the structure and dependency of the repo project.
 
     <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
 
@@ -62,7 +62,6 @@ the directories that are visible and where they should be obtained from with git
             <dependencies>
                 <api name="mylibrary2"/>
                 <implementation name="mylibrary"/>
-                <apiDebug name="mylibrary"/>
             </dependencies>
         </module>
      
@@ -76,28 +75,29 @@ the directories that are visible and where they should be obtained from with git
 
 ##### Element project
 At most one project must be specified.
+This element describes a single Git repository to be cloned as a root project workspace.
 
 - Attribute `origin`: Specify the URL of a Git repository. 
-- Attribute `branch`: Name of the Git branch the manifest wants to track for this module. If not supplied the branch given by the project element is used if applicable.
+- Attribute `branch`: Name of the Git branch the manifest wants to track for this module.
   
 ##### Element module
 One or more project elements may be specified.
-Each element describes a single Git repository to be cloned into the repo project workspace.
+Each element describes a single Git repository to be cloned into the root project workspace.
 
 - Attribute `name`: A unique name for this module. The module name must match the directory name of this module.
 - Attribute `local`: An optional path relative to the top directory of the repo client where the Git working directory for this project should be placed. If not supplied the top directory path is used.
-- Attribute `origin`: Specify the URL of a Git repository. Support path relative to the project element.
-- Attribute `branch`: Name of the Git branch the manifest wants to track for this module. If not supplied the branch given by the project element is used if applicable.
+- Attribute `origin`: Specify the URL of a Git repository. Support path relative to the project element origin.
+- Attribute `branch`: Name of the Git branch the manifest wants to track for this module. If not supplied the branch given by the project element branch is used if applicable.
     
 ##### Element include
 Zero or more include elements may be specified as children of a project element.
-Define which module and the root project are in the same repository.
+Define which module and the root project are in the same Git repository.
 
 - Attribute `name`: The value must match the element module name.
 
 ##### Element dependencies
-At most one project may be specified.
-Declaring dependencies to a module
+At most one project may be specified as children of a module element.
+Declaring dependencies to a module.
 
 Chile Element Node Name must match the name [Gradle Dependency Configurations](https://docs.gradle.org/current/userguide/managing_dependency_configurations.html) identified.
 - Attribute `name`: The value must match the element module name.
@@ -112,9 +112,9 @@ Provides an action which allow you sync and bind remote origin repository when y
 
 ## QA
 
-**Still need to include project in settings.gradle ?**
+**Don't need to include project in settings.gradle any more ?**
 
-    No longer needed, will automatically add the given module you declared in repo.xml to the build by repo plugin.
+    Yes, will automatically add the given module you declared in repo.xml to the build by repo plugin.
     
 **How to switch to other feature branches ?**
 
