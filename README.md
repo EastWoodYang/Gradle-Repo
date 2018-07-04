@@ -42,7 +42,7 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
     <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>
 
 
-## repo.xml Manifest Format
+## Repo Manifest Format
 A repo manifest describes the structure and dependency of a repo project; that is
 the directories that are visible and where they should be obtained from with git.
 
