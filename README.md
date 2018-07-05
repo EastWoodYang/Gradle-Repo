@@ -81,7 +81,7 @@ This element describes a single Git repository to be cloned as a root project wo
 - Attribute `branch`: Name of the Git branch the manifest wants to track for this module.
   
 ##### Element module
-One or more project elements may be specified.
+One or more module elements may be specified.
 Each element describes a single Git repository to be cloned into the root project workspace.
 
 - Attribute `name`: A unique name for this module. The module name must match the directory name of this module.
