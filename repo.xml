@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <manifest>
 
-    <project origin="https://github.com/EastWoodYang/gradle-repo.git"
+    <project origin="https://github.com/EastWoodYang/Gradle-Repo.git"
         branch="master" >
 
         <include name="mylibrary3"/>
