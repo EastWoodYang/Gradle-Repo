@@ -114,7 +114,7 @@ An SCM provider for Jenkins. Projects can use this plugin to only run builds whe
 to list the changes between builds, and to re-create the project state across all repositories for any previous build using a static manifest.
 
 <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/4.png'/>
-Plugin detail: [ https://plugins.jenkins.io/gradle-repo ](https://plugins.jenkins.io/gradle-repo)
+Plugin detail: https://plugins.jenkins.io/gradle-repo
 
 ## QA
 
