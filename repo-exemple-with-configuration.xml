@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<manifest>
+
+    <configurations>
+        <global>
+            <enclude name="xxx" />
+            <enclude group="xxx.xxx.xxx" />
+            <enclude name="xxx" group="xxx.xxx.xxx" />
+
+            <force name="xxx" group="xxx.xxx.xxx" version="x.x.x" />
+        </global>
+
+        <configuration name="xxx">
+            <enclude />
+        </configuration>
+
+        <configuration name="implementation" transitive="false" />
+    </configurations>
+
+    <default branch="master" fetch="https://github.com/EastWoodYang/" />
+
+    <project origin="gradle-repo" />
+
+    <module name="app" local="./" origin="xxx/xxx.git">
+        <dependencies>
+            <implementation name="library" />
+            <xxx name="xxx" group="xxx.xxx.xxx" version="x.x.x" />
+            <implementation name="xxx" group="xxx.xxx.xxx" version="x.x.x" />
+        </dependencies>
+    </module>
+
+    <module name="library" branch="xxx" origin="xxx/xxx.git" />
+
+</manifest>

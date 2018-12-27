@@ -21,17 +21,15 @@ class BindRemoteRepositoryTask extends DefaultTask {
             }
         }
 
-        bindRemoteProject(repositoryInfo.originInfo.originUrl)
+        bindRemoteProject(repositoryInfo.fetchUrl)
     }
 
     void bindRemoteProject(String repo) {
         GitUtil.init(moduleDir)
         if (elementName == 'project') {
-            def repoFile = new File(moduleDir, 'repo.xml')
-            RepoInfo repoInfo = RepoUtil.getRepoInfo(repoFile, false)
+            RepoInfo repoInfo = RepoUtil.getRepoInfo(moduleDir, false)
             RepoUtil.updateExclude(moduleDir, repoInfo)
         }
-
 
         def gitignore = new File(moduleDir, '.gitignore')
         def ignore = gitignore.getText("utf-8")

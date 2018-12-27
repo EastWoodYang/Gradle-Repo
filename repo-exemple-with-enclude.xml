@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<manifest>
+
+    <default branch="master" fetch="https://github.com/EastWoodYang/" />
+
+    <project origin="gradle-repo" />
+
+    <module name="app" local="./" origin="xxx/xxx.git">
+        <dependencies>
+            <implementation name="library" />
+        </dependencies>
+    </module>
+
+    <module name="library" origin="xxx/xxx.git">
+        <dependencies>
+            <implementation name="xxx" group="xxx.xxx.xxx" version="x.x.x">
+                <enclude name="xxx" />
+                <enclude group="xxx.xxx.xxx" />
+                <enclude name="xxx" group="xxx.xxx.xxx" />
+            </implementation>
+        </dependencies>
+    </module>
+
+</manifest>

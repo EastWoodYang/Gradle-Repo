@@ -11,13 +11,7 @@ class SyncRepoProjectTask extends DefaultTask {
     @TaskAction
     void build() {
         Project rootProject = project.getRootProject()
-        def repoFile = new File(rootProject.projectDir, 'repo.xml')
-        if (!repoFile.exists()) {
-            println "[repo] - repo.xml not exist."
-            return
-        }
-
-        RepoInfo repoInfo = RepoUtil.getRepoInfo(repoFile, true)
+        RepoInfo repoInfo = RepoUtil.getRepoInfo(rootProject.projectDir, true)
 
         boolean initialized = GitUtil.isGitDir(rootProject.projectDir)
         String repoXml = ""
@@ -51,7 +45,7 @@ class SyncRepoProjectTask extends DefaultTask {
 
         if (!initialized) return
 
-        repoInfo = RepoUtil.getRepoInfo(repoFile, false)
+        repoInfo = RepoUtil.getRepoInfo(rootProject.projectDir, false)
         RepoUtil.updateExclude(rootProject.projectDir, repoInfo)
     }
 

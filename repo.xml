@@ -1,23 +1,22 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <manifest>
 
-    <project origin="https://github.com/EastWoodYang/Gradle-Repo.git"
-        branch="master" >
+    <default branch="master" fetch="https://github.com/EastWoodYang/" />
 
-        <include name="mylibrary3"/>
+    <project origin="Gradle-Repo.git">
+
+        <include name="mylibrary3" />
 
     </project>
 
-    <module name="app" origin="./gradle-repo-app.git">
+    <module name="app" origin="gradle-repo-app.git">
         <dependencies>
-            <api name="mylibrary"/>
-            <api name="mylibrary2"/>
+            <api name="mylibrary" />
+            <api name="appcompat-v7" group="com.android.support" version="27.1.1" />
         </dependencies>
     </module>
 
-    <module name="mylibrary" origin="https://github.com/EastWoodYang/gradle-repo-mylibrary.git"/>
-
-    <module name="mylibrary2" origin="./gradle-repo-mylibrary2.git"/>
+    <module name="mylibrary" origin="gradle-repo-mylibrary.git" />
 
     <module name="mylibrary3" />
 

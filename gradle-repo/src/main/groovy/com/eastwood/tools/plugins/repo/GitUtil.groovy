@@ -22,7 +22,7 @@ class GitUtil {
         def process = ("git add $files").execute(null, dir)
         def result = process.waitFor()
         if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git add $files] under ${dir.absolutePath}\nmessage: ${process.err.text}")
+            throw new RuntimeException("[repo] - fail to execute git command [git add $files] under ${dir.absolutePath}\nmessage: ${process.err.text}")
         }
     }
 
@@ -35,7 +35,7 @@ class GitUtil {
         def process = ("git clone -b " + branchName + " " + url + " -l " + dir.name).execute(null, dir.parentFile)
         def result = process.waitFor()
         if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git clone -b $branchName $url \".\"] under ${dir.absolutePath}\n message: ${process.err.text}")
+            throw new RuntimeException("[repo] - fail to execute git command [git clone -b $branchName $url \".\"] under ${dir.absolutePath}\n message: ${process.err.text}")
         }
     }
 
@@ -43,7 +43,7 @@ class GitUtil {
         def process = ("git commit -m \"" + message + "\"").execute(null, dir)
         def result = process.waitFor()
         if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git commit -m \"" + message + "\"] under ${dir.absolutePath}\n message: ${process.err.text}")
+            throw new RuntimeException("[repo] - fail to execute git command [git commit -m \"" + message + "\"] under ${dir.absolutePath}\n message: ${process.err.text}")
         }
     }
 
@@ -51,20 +51,30 @@ class GitUtil {
         return new File(dir, ".git").exists()
     }
 
-    static String getRemoteUrl(File dir) {
-        def process = ("git remote get-url origin").execute(null, dir)
+    static String getOriginRemoteFetchUrl(File dir) {
+        def process = ("git remote -v").execute(null, dir)
         def result = process.waitFor()
         if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git remote get-url origin] under ${dir.absolutePath}\n message: ${process.err.text}")
+            throw new RuntimeException("[repo] - fail to execute git command [git remote -v] under ${dir.absolutePath}\n message: ${process.err.text}")
         }
-        return process.text.trim()
+
+        def url = null
+        process.getText().readLines().each {
+            if (it.startsWith('origin') && it.endsWith('(fetch)')) {
+                url = it.replace('origin', '').replace('(fetch)', '').trim()
+            }
+        }
+        if (url == null) {
+            throw new RuntimeException("[repo] - fail to get origin remote fetch fetchUrl.")
+        }
+        return url
     }
 
     static String getBranchName(File dir) {
         def process = ("git symbolic-ref --short -q HEAD").execute(null, dir)
         def result = process.waitFor()
         if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git symbolic-ref --short -q HEAD] under ${dir.absolutePath}\n message: ${process.err.text}")
+            throw new RuntimeException("[repo] - fail to execute git command [git symbolic-ref --short -q HEAD] under ${dir.absolutePath}\n message: ${process.err.text}")
         }
         return process.text.trim()
     }

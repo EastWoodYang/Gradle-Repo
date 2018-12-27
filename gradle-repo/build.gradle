@@ -10,7 +10,7 @@ repositories {
 dependencies {
     compile gradleApi()
     compile localGroovy()
-    compile "net.sf.kxml:kxml2:2.3.0"
+    compile 'net.sf.kxml:kxml2:2.3.0'
     compile 'commons-io:commons-io:2.5'
 }
 

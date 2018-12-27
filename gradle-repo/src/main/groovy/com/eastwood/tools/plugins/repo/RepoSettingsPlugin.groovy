@@ -15,19 +15,14 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         this.settings = settings
         projectDir = settings.rootProject.projectDir
 
-        def repoFile = new File(projectDir, 'repo.xml')
-        if (!repoFile.exists()) {
-            println "[repo] - can't find file [repo.xml] under root project."
-            return
-        }
-
-        RepoInfo repoInfo = RepoUtil.getRepoInfo(repoFile, false)
+        RepoInfo repoInfo = RepoUtil.getRepoInfo(projectDir, false)
         boolean initialized = GitUtil.isGitDir(projectDir)
         if (initialized) {
-            String remoteUrl = GitUtil.getRemoteUrl(projectDir)
-            if (repoInfo.projectInfo == null || repoInfo.projectInfo.repositoryInfo == null || remoteUrl != repoInfo.projectInfo.repositoryInfo.originInfo.getOriginUrl()) {
-                throw new RuntimeException("[repo] - project git remote origin repository is changed.")
+            String fetchUrl = GitUtil.getOriginRemoteFetchUrl(projectDir)
+            if (repoInfo.projectInfo == null || repoInfo.projectInfo.repositoryInfo == null || fetchUrl != repoInfo.projectInfo.repositoryInfo.fetchUrl) {
+                throw new RuntimeException("[repo] - project git remote origin fetch url is changed.")
             }
+
             RepositoryInfo projectRepositoryInfo = repoInfo.projectInfo.repositoryInfo
             if (GitUtil.isBranchChanged(projectDir, projectRepositoryInfo.branch)) {
                 isProjectClean(repoInfo)
@@ -46,7 +41,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                         println "[repo] - git checkout -b $projectRepositoryInfo.branch"
                     }
                 }
-                repoInfo = RepoUtil.getRepoInfo(repoFile, false)
+                repoInfo = RepoUtil.getRepoInfo(projectDir, false)
             }
         }
 
@@ -66,8 +61,8 @@ class RepoSettingsPlugin implements Plugin<Settings> {
             if (moduleDir.exists()) {
                 boolean moduleInitialized = GitUtil.isGitDir(moduleDir)
                 if (moduleInitialized) {
-                    String remoteUrl = GitUtil.getRemoteUrl(moduleDir)
-                    if (moduleInfo.repositoryInfo == null || remoteUrl != moduleInfo.repositoryInfo.originInfo.getOriginUrl()) {
+                    String remoteUrl = GitUtil.getOriginRemoteFetchUrl(moduleDir)
+                    if (moduleInfo.repositoryInfo == null || remoteUrl != moduleInfo.repositoryInfo.fetchUrl) {
                         throw new RuntimeException("[repo] - module [$moduleName] git remote origin repository is changed.")
                     }
 
@@ -99,7 +94,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                     RepositoryInfo repositoryInfo = moduleInfo.repositoryInfo
                     if (repositoryInfo == null) return
 
-                    String originUrl = repositoryInfo.originInfo.getOriginUrl()
+                    String originUrl = repositoryInfo.fetchUrl
                     println "[repo] - git clone $originUrl"
                     GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
                 }
@@ -108,7 +103,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 RepositoryInfo repositoryInfo = moduleInfo.repositoryInfo
                 if (repositoryInfo == null) return
 
-                String originUrl = repositoryInfo.originInfo.getOriginUrl()
+                String originUrl = repositoryInfo.fetchUrl
                 println "[repo] - git clone $originUrl"
                 GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
             }
@@ -117,6 +112,51 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         if (!initialized) return
 
         RepoUtil.updateExclude(projectDir, repoInfo)
+
+//        settings.gradle.addBuildListener(new BuildListener() {
+//            @Override
+//            void buildStarted(Gradle gradle) {
+//
+//            }
+//
+//            @Override
+//            void settingsEvaluated(Settings s) {
+//
+//            }
+//
+//            @Override
+//            void projectsLoaded(Gradle gradle) {
+//
+//            }
+//
+//            @Override
+//            void projectsEvaluated(Gradle gradle) {
+//
+//            }
+//
+//            @Override
+//            void buildFinished(BuildResult buildResult) {
+//                if (buildResult.failure != null) return
+//
+//                RepoInfo lastRepoInfo = RepoUtil.getLastRepoManifest(projectDir)
+//                repoInfo.moduleInfoMap.each {
+//                    lastRepoInfo.moduleInfoMap.remove(it.key)
+//                }
+//
+//                File repoCacheDir = new File(projectDir, '.gradle/repo/cache')
+//                if(!repoCacheDir.exists()) {
+//                    repoCacheDir.mkdirs()
+//                }
+//
+//                lastRepoInfo.moduleInfoMap.each {
+//                    if(it.value.repositoryInfo == null) return
+//                    def moduleDir = RepoUtil.getModuleDir(projectDir, it.value)
+//                    File repoBin = new File(repoCacheDir, convertToUnderLine(it.value.repositoryInfo.fetchUrl) + '.bin')
+//                    FileUtil.compress(moduleDir, repoBin)
+//                }
+//                RepoUtil.saveRepoManifest(settings.rootProject.projectDir, repoInfo)
+//            }
+//        })
     }
 
     boolean isProjectClean(RepoInfo repoInfo) {
@@ -124,7 +164,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         def process = ("git status -s").execute(null, projectDir)
         def result = process.waitFor()
         if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git status -s] under ${projectDir.absolutePath}\n message: ${process.err.text}")
+            throw new RuntimeException("[repo] - fail to execute git command [git status -s] under ${projectDir.absolutePath}\n message: ${process.err.text}")
         }
         def info = process.text
         int changeSize = info.split("\n").size()
@@ -148,6 +188,18 @@ class RepoSettingsPlugin implements Plugin<Settings> {
             }
         }
 
+    }
+
+    String convertToUnderLine(String url) {
+        url = url.toLowerCase()
+        char[] chars = url.toLowerCase().chars
+        for (int i = 0; i < chars.length; i++) {
+            if ((chars[i] >= 'a' && chars[i] <= 'z') || (chars[i] >= '0' && chars[i] <= '9')) {
+                continue
+            }
+            chars[i] = '_'
+        }
+        return chars.toString()
     }
 
 }
