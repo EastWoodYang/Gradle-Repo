@@ -2,35 +2,6 @@ package com.eastwood.tools.plugins.repo
 
 class GitUtil {
 
-    static void init(File dir) {
-        def process = ("git init").execute(null, dir)
-        def result = process.waitFor()
-        if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git init] under ${dir.absolutePath}\nmessage: ${process.err.text}")
-        }
-    }
-
-    static void addRemote(File dir, String url) {
-        def process = ("git remote add origin $url").execute(null, dir)
-        def result = process.waitFor()
-        if (result != 0) {
-            throw new RuntimeException("[repo] - git fail to execute [git remote add origin $url] under ${dir.absolutePath}\nmessage: ${process.err.text}")
-        }
-    }
-
-    static void addFiles(File dir, String files) {
-        def process = ("git add $files").execute(null, dir)
-        def result = process.waitFor()
-        if (result != 0) {
-            throw new RuntimeException("[repo] - fail to execute git command [git add $files] under ${dir.absolutePath}\nmessage: ${process.err.text}")
-        }
-    }
-
-    static void removeFiles(File dir, String files) {
-        def process = ("git rm --cached -r $files").execute(null, dir)
-        process.waitFor()
-    }
-
     static void clone(File dir, String url, String branchName) {
         def process = ("git clone -b " + branchName + " " + url + " -l " + dir.name).execute(null, dir.parentFile)
         def result = process.waitFor()
@@ -103,7 +74,7 @@ class GitUtil {
         if (result != 0) {
             throw new RuntimeException("[repo] - git fail to execute [git fetch] under ${dir.absolutePath}\n message: ${process.err.text}")
         }
-        if(branchName == "master") {
+        if (branchName == "master") {
             branchName = "HEAD"
         }
         return new File(dir, ".git/refs/remotes/origin/$branchName").exists()

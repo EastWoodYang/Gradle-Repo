@@ -1,11 +1,13 @@
 package com.eastwood.tools.plugins.repo
 
-import com.eastwood.tools.plugins.repo.model.*
+import com.eastwood.tools.plugins.repo.model.Configuration
+import com.eastwood.tools.plugins.repo.model.Dependency
+import com.eastwood.tools.plugins.repo.model.ModuleInfo
+import com.eastwood.tools.plugins.repo.model.RepoInfo
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExcludeRule
 import org.gradle.api.artifacts.ModuleDependency
-import org.gradle.api.tasks.TaskContainer
 
 class RepoBuildPlugin implements Plugin<Project> {
 
@@ -113,30 +115,8 @@ class RepoBuildPlugin implements Plugin<Project> {
                         }
                     }
                 }
-
-                if (!repoInfo.projectInfo.includeModuleList.contains(moduleInfo.name)) {
-                    def moduleDir = RepoUtil.getModuleDir(projectDir, moduleInfo)
-                    if (moduleInfo.repositoryInfo != null && !GitUtil.isGitDir(moduleDir)) {
-                        createBindRemoteRepositoryTask(currentProject, moduleInfo.name, moduleDir, moduleInfo.repositoryInfo)
-                    }
-                }
-            }
-
-            if (!GitUtil.isGitDir(projectDir)) {
-                createBindRemoteRepositoryTask(project, "project", projectDir, repoInfo.projectInfo.repositoryInfo)
             }
         }
-    }
-
-    void createBindRemoteRepositoryTask(Project project, String name, File moduleDir, RepositoryInfo repositoryInfo) {
-        TaskContainer tasks = project.getTasks()
-        BindRemoteRepositoryTask uploadModuleTask
-        uploadModuleTask = tasks.create("bindRemoteRepository", BindRemoteRepositoryTask.class)
-        uploadModuleTask.setDescription("create remote origin repository by gitlab api and bind it.")
-        uploadModuleTask.setGroup('repo')
-        uploadModuleTask.moduleDir = moduleDir
-        uploadModuleTask.elementName = name
-        uploadModuleTask.repositoryInfo = repositoryInfo
     }
 
 }

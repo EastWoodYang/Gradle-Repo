@@ -63,7 +63,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 if (moduleInitialized) {
                     String remoteUrl = GitUtil.getOriginRemoteFetchUrl(moduleDir)
                     if (moduleInfo.repositoryInfo == null || remoteUrl != moduleInfo.repositoryInfo.fetchUrl) {
-                        throw new RuntimeException("[repo] - module [$moduleName] git remote origin repository is changed.")
+                        throw new RuntimeException("[repo] - module [$moduleName] git remote origin fetch url is changed.")
                     }
 
                     String branch = moduleInfo.repositoryInfo.branch
@@ -95,7 +95,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                     if (repositoryInfo == null) return
 
                     String originUrl = repositoryInfo.fetchUrl
-                    println "[repo] - git clone $originUrl"
+                    println "[repo] - git clone $originUrl -b $repositoryInfo.branch"
                     GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
                 }
             } else {
@@ -104,62 +104,20 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 if (repositoryInfo == null) return
 
                 String originUrl = repositoryInfo.fetchUrl
-                println "[repo] - git clone $originUrl"
+                println "[repo] - git clone $originUrl -b $repositoryInfo.branch"
                 GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
             }
         }
 
-        if (!initialized) return
+        if (initialized) {
+            RepoUtil.updateExclude(projectDir, repoInfo)
+        }
 
-        RepoUtil.updateExclude(projectDir, repoInfo)
-
-//        settings.gradle.addBuildListener(new BuildListener() {
-//            @Override
-//            void buildStarted(Gradle gradle) {
-//
-//            }
-//
-//            @Override
-//            void settingsEvaluated(Settings s) {
-//
-//            }
-//
-//            @Override
-//            void projectsLoaded(Gradle gradle) {
-//
-//            }
-//
-//            @Override
-//            void projectsEvaluated(Gradle gradle) {
-//
-//            }
-//
-//            @Override
-//            void buildFinished(BuildResult buildResult) {
-//                if (buildResult.failure != null) return
-//
-//                RepoInfo lastRepoInfo = RepoUtil.getLastRepoManifest(projectDir)
-//                repoInfo.moduleInfoMap.each {
-//                    lastRepoInfo.moduleInfoMap.remove(it.key)
-//                }
-//
-//                File repoCacheDir = new File(projectDir, '.gradle/repo/cache')
-//                if(!repoCacheDir.exists()) {
-//                    repoCacheDir.mkdirs()
-//                }
-//
-//                lastRepoInfo.moduleInfoMap.each {
-//                    if(it.value.repositoryInfo == null) return
-//                    def moduleDir = RepoUtil.getModuleDir(projectDir, it.value)
-//                    File repoBin = new File(repoCacheDir, convertToUnderLine(it.value.repositoryInfo.fetchUrl) + '.bin')
-//                    FileUtil.compress(moduleDir, repoBin)
-//                }
-//                RepoUtil.saveRepoManifest(settings.rootProject.projectDir, repoInfo)
-//            }
-//        })
+        RepoUtil.saveRepoManifest(projectDir, repoInfo)
     }
 
-    boolean isProjectClean(RepoInfo repoInfo) {
+    boolean isProjectClean() {
+        RepoInfo repoInfo = RepoUtil.getLastRepoManifest(projectDir)
         // check root project
         def process = ("git status -s").execute(null, projectDir)
         def result = process.waitFor()
@@ -187,19 +145,6 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 throw new RuntimeException("[repo] - ${RepoUtil.getModuleName(projectDir, moduleDir)}: changes not staged for commit.")
             }
         }
-
-    }
-
-    String convertToUnderLine(String url) {
-        url = url.toLowerCase()
-        char[] chars = url.toLowerCase().chars
-        for (int i = 0; i < chars.length; i++) {
-            if ((chars[i] >= 'a' && chars[i] <= 'z') || (chars[i] >= '0' && chars[i] <= '9')) {
-                continue
-            }
-            chars[i] = '_'
-        }
-        return chars.toString()
     }
 
 }

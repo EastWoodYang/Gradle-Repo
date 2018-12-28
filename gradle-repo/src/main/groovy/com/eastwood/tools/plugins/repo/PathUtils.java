@@ -57,10 +57,10 @@ import java.io.File;
  * <p>
  * Origin of code: Excalibur, Alexandria, Tomcat, Commons-Utils.
  *
- * @version $Id: FilenameUtils.java 1702170 2015-09-10 06:35:02Z krosenvold $
+ * @version $Id: PathUtils.java 1702170 2015-09-10 06:35:02Z krosenvold $
  * @since 1.1
  */
-public class FilenameUtils {
+public class PathUtils {
 
     /**
      * The extension separator character.
@@ -106,7 +106,7 @@ public class FilenameUtils {
     /**
      * Instances should NOT be constructed in standard programming.
      */
-    public FilenameUtils() {
+    public PathUtils() {
         super();
     }
 

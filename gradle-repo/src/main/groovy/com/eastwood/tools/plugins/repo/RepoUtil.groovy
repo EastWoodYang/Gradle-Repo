@@ -166,8 +166,7 @@ class RepoUtil {
         return repoInfo
     }
 
-    private
-    static RepoInfo parseRepoLocal(RepoInfo repoInfo, File repoLocalFile, boolean withDependencies) {
+    private static RepoInfo parseRepoLocal(RepoInfo repoInfo, File repoLocalFile, boolean withDependencies) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance()
         DocumentBuilder builder = factory.newDocumentBuilder()
         FileInputStream inputStream = new FileInputStream(repoLocalFile)
@@ -345,30 +344,30 @@ class RepoUtil {
             String fetchUrl = defaultInfo.fetchUrl + '/./' + origin
             if (fetchUrl.startsWith("git@")) {
                 String[] temp = fetchUrl.split(":")
-                repositoryInfo.fetchUrl = temp[0] + ':' + FilenameUtils.normalize(temp[1], true)
+                repositoryInfo.fetchUrl = temp[0] + ':' + PathUtils.normalize(temp[1], true)
                 repositoryInfo.pushUrl = repositoryInfo.fetchUrl
             } else {
                 URI uri = new URI(fetchUrl)
-                repositoryInfo.fetchUrl = fetchUrl.replace(uri.getPath(), "") + FilenameUtils.normalize(uri.getPath(), true)
+                repositoryInfo.fetchUrl = fetchUrl.replace(uri.getPath(), "") + PathUtils.normalize(uri.getPath(), true)
                 repositoryInfo.pushUrl = repositoryInfo.fetchUrl
             }
         } else {
             String fetchUrl = defaultInfo.fetchUrl + '/./' + origin
             if (fetchUrl.startsWith("git@")) {
                 String[] temp = fetchUrl.split(":")
-                repositoryInfo.fetchUrl = temp[0] + ':' + FilenameUtils.normalize(temp[1], true)
+                repositoryInfo.fetchUrl = temp[0] + ':' + PathUtils.normalize(temp[1], true)
             } else {
                 URI uri = new URI(fetchUrl)
-                repositoryInfo.fetchUrl = fetchUrl.replace(uri.getPath(), "") + FilenameUtils.normalize(uri.getPath(), true)
+                repositoryInfo.fetchUrl = fetchUrl.replace(uri.getPath(), "") + PathUtils.normalize(uri.getPath(), true)
             }
 
             String pushUrl = defaultInfo.pushUrl + '/./' + origin
             if (pushUrl.startsWith("git@")) {
                 String[] temp = pushUrl.split(":")
-                repositoryInfo.pushUrl = temp[0] + ':' + FilenameUtils.normalize(temp[1], true)
+                repositoryInfo.pushUrl = temp[0] + ':' + PathUtils.normalize(temp[1], true)
             } else {
                 URI uri = new URI(pushUrl)
-                repositoryInfo.pushUrl = pushUrl.replace(uri.getPath(), "") + FilenameUtils.normalize(uri.getPath(), true)
+                repositoryInfo.pushUrl = pushUrl.replace(uri.getPath(), "") + PathUtils.normalize(uri.getPath(), true)
             }
         }
 
@@ -387,11 +386,11 @@ class RepoUtil {
         RepositoryInfo repositoryInfo = new RepositoryInfo()
         if (origin.startsWith("git@")) {
             String[] temp = origin.split(":")
-            repositoryInfo.fetchUrl = temp[0] + ':' + FilenameUtils.normalize(temp[1], true)
+            repositoryInfo.fetchUrl = temp[0] + ':' + PathUtils.normalize(temp[1], true)
             repositoryInfo.pushUrl = repositoryInfo.fetchUrl
         } else {
             URI uri = new URI(origin)
-            repositoryInfo.fetchUrl = origin.replace(uri.getPath(), "") + FilenameUtils.normalize(uri.getPath(), true)
+            repositoryInfo.fetchUrl = origin.replace(uri.getPath(), "") + PathUtils.normalize(uri.getPath(), true)
             repositoryInfo.pushUrl = repositoryInfo.fetchUrl
         }
         return repositoryInfo
@@ -548,7 +547,9 @@ class RepoUtil {
 
             ModuleInfo moduleInfo = it.value
             moduleElement.setAttribute('name', moduleInfo.name)
-            moduleElement.setAttribute('local', moduleInfo.local)
+            if (moduleInfo.local != './') {
+                moduleElement.setAttribute('local', moduleInfo.local)
+            }
             if (moduleInfo.repositoryInfo != null) {
                 moduleElement.setAttribute("fetch", moduleInfo.repositoryInfo.fetchUrl)
                 if (moduleInfo.repositoryInfo.fetchUrl != moduleInfo.repositoryInfo.pushUrl) {
@@ -558,7 +559,7 @@ class RepoUtil {
             }
 
             if (moduleInfo.fromLocal) {
-                moduleElement.setAttribute('fromLocal', 'ture')
+                moduleElement.setAttribute('fromLocal', 'true')
             }
         }
 
@@ -575,5 +576,4 @@ class RepoUtil {
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
         transformer.transform(new DOMSource(manifestElement), new StreamResult(lastRepoManifest))
     }
-
 }
