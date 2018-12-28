@@ -7,8 +7,6 @@ buildscript {
     }
 
     dependencies {
-        classpath 'net.sf.kxml:kxml2:2.3.0'
-        classpath 'commons-io:commons-io:2.5'
         classpath files('./gradle-repo/build/libs/gradle-repo.jar')
     }
 }
