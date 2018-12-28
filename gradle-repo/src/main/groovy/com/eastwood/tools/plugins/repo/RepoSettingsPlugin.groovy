@@ -25,7 +25,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
 
             RepositoryInfo projectRepositoryInfo = repoInfo.projectInfo.repositoryInfo
             if (GitUtil.isBranchChanged(projectDir, projectRepositoryInfo.branch)) {
-                isProjectClean(repoInfo)
+                isProjectClean()
                 if (GitUtil.isLocalBranch(projectDir, projectRepositoryInfo.branch)) {
                     GitUtil.revertRepoFile(projectDir)
                     GitUtil.checkoutBranch(projectDir, projectRepositoryInfo.branch)
@@ -124,9 +124,9 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         if (result != 0) {
             throw new RuntimeException("[repo] - fail to execute git command [git status -s] under ${projectDir.absolutePath}\n message: ${process.err.text}")
         }
-        def info = process.text
-        int changeSize = info.split("\n").size()
-        boolean isClean = changeSize <= 2 && info.contains(" repo.xml\n")
+        def info = process.text.readLines()
+        int changeSize = info.size()
+        boolean isClean = changeSize == 1 && info.get(0).endsWith('repo.xml')
         if (!isClean) {
             GitUtil.revertRepoFile(projectDir)
             throw new RuntimeException("[repo] - ${settings.rootProject.getName()}: changes not staged for commit.")
