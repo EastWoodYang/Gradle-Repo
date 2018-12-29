@@ -15,34 +15,51 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         this.settings = settings
         projectDir = settings.rootProject.projectDir
 
+        RepoInfo lastRepoInfo = RepoUtil.getLastRepoManifest(projectDir)
         RepoInfo repoInfo = RepoUtil.getRepoInfo(projectDir, false)
 
         boolean initialized = GitUtil.isGitDir(projectDir)
         if (initialized) {
-            String fetchUrl = GitUtil.getOriginRemoteFetchUrl(projectDir)
-            if (repoInfo.projectInfo == null || repoInfo.projectInfo.repositoryInfo == null || fetchUrl != repoInfo.projectInfo.repositoryInfo.fetchUrl) {
-                throw new RuntimeException("[repo] - project '${settings.rootProject.getName()}': git remote origin fetch url is changed.")
-            }
-
             RepositoryInfo projectRepositoryInfo = repoInfo.projectInfo.repositoryInfo
-            if (GitUtil.isBranchChanged(projectDir, projectRepositoryInfo.branch)) {
-                isProjectClean()
-                if (GitUtil.isLocalBranch(projectDir, projectRepositoryInfo.branch)) {
-                    GitUtil.revertRepoFile(projectDir)
-                    GitUtil.checkoutBranch(projectDir, projectRepositoryInfo.branch)
-                    println "[repo] - project '${settings.rootProject.getName()}': git checkout $projectRepositoryInfo.branch"
-                } else {
-                    if (GitUtil.isRemoteBranch(projectDir, projectRepositoryInfo.branch)) {
-                        GitUtil.revertRepoFile(projectDir)
-                        GitUtil.checkoutRemoteBranch(projectDir, projectRepositoryInfo.branch)
-                        println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch origin/$projectRepositoryInfo.branch"
-                    } else {
-                        GitUtil.checkoutNewBranch(projectDir, projectRepositoryInfo.branch)
-                        GitUtil.commitRepoFile(projectDir)
-                        println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch"
-                    }
+            if (projectRepositoryInfo != null) {
+                String fetchUrl = GitUtil.getOriginRemoteFetchUrl(projectDir)
+                if (fetchUrl != projectRepositoryInfo.fetchUrl) {
+                    GitUtil.setOriginRemoteUrl(projectDir, projectRepositoryInfo.fetchUrl)
                 }
-                repoInfo = RepoUtil.getRepoInfo(projectDir, false)
+
+                String pushUrl = GitUtil.getOriginRemotePushUrl(projectDir)
+                if (pushUrl != projectRepositoryInfo.pushUrl) {
+                    GitUtil.setOriginRemotePushUrl(projectDir, projectRepositoryInfo.pushUrl)
+                }
+
+                if (GitUtil.isBranchChanged(projectDir, projectRepositoryInfo.branch)) {
+                    isProjectClean()
+                    if (GitUtil.isLocalBranch(projectDir, projectRepositoryInfo.branch)) {
+                        GitUtil.revertRepoFile(projectDir)
+                        GitUtil.checkoutBranch(projectDir, projectRepositoryInfo.branch)
+                        println "[repo] - project '${settings.rootProject.getName()}': git checkout $projectRepositoryInfo.branch"
+                    } else {
+                        if (GitUtil.isRemoteBranch(projectDir, projectRepositoryInfo.branch)) {
+                            GitUtil.revertRepoFile(projectDir)
+                            GitUtil.checkoutRemoteBranch(projectDir, projectRepositoryInfo.branch)
+                            println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch origin/$projectRepositoryInfo.branch"
+                        } else {
+                            GitUtil.checkoutNewBranch(projectDir, projectRepositoryInfo.branch)
+                            GitUtil.commitRepoFile(projectDir)
+                            println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch"
+                        }
+                    }
+                    repoInfo = RepoUtil.getRepoInfo(projectDir, false)
+                }
+            } else {
+                initialized = false
+                GitUtil.clearGitDir(projectDir)
+            }
+        } else {
+            if (repoInfo.projectInfo.repositoryInfo != null) {
+                GitUtil.init(projectDir)
+                GitUtil.commitRepoFile(projectDir)
+                GitUtil.addRemote(projectDir, repoInfo.projectInfo.repositoryInfo.fetchUrl)
             }
         }
 
@@ -55,16 +72,28 @@ class RepoSettingsPlugin implements Plugin<Settings> {
             // include
             settings.include moduleName
 
-            if (repoInfo.projectInfo != null && repoInfo.projectInfo.includeModuleList.contains(moduleInfo.name))
+            if (repoInfo.projectInfo.includeModuleList.contains(moduleInfo.name)) {
+                GitUtil.clearGitDir(moduleDir)
                 return
+            }
 
             // module
             if (moduleDir.exists()) {
                 boolean moduleInitialized = GitUtil.isGitDir(moduleDir)
                 if (moduleInitialized) {
-                    String remoteUrl = GitUtil.getOriginRemoteFetchUrl(moduleDir)
-                    if (moduleInfo.repositoryInfo == null || remoteUrl != moduleInfo.repositoryInfo.fetchUrl) {
-                        throw new RuntimeException("[repo] - module '$moduleName': git remote origin fetch url is changed.")
+                    if (moduleInfo.repositoryInfo != null) {
+                        String remoteUrl = GitUtil.getOriginRemoteFetchUrl(moduleDir)
+                        if (remoteUrl != moduleInfo.repositoryInfo.fetchUrl) {
+                            GitUtil.setOriginRemoteUrl(moduleDir, moduleInfo.repositoryInfo.fetchUrl)
+                        }
+
+                        String pushUrl = GitUtil.getOriginRemotePushUrl(moduleDir)
+                        if (pushUrl != moduleInfo.repositoryInfo.pushUrl) {
+                            GitUtil.setOriginRemotePushUrl(moduleDir, moduleInfo.repositoryInfo.pushUrl)
+                        }
+                    } else {
+                        GitUtil.clearGitDir(moduleDir)
+                        return
                     }
 
                     String branch = moduleInfo.repositoryInfo.branch
@@ -89,15 +118,27 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                         }
                     }
                 } else {
-                    if (moduleDir.list().size() > 0) {
-                        return
-                    }
                     RepositoryInfo repositoryInfo = moduleInfo.repositoryInfo
                     if (repositoryInfo == null) return
 
-                    String originUrl = repositoryInfo.fetchUrl
-                    println "[repo] - module '$moduleName': git clone $originUrl -b $repositoryInfo.branch"
-                    GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
+                    ModuleInfo lastModuleInfo = lastRepoInfo.moduleInfoMap.get(moduleInfo.name)
+                    if (lastModuleInfo == null || lastModuleInfo.repositoryInfo == null) {
+                        GitUtil.init(moduleDir)
+                        GitUtil.addRemote(moduleDir, repositoryInfo.fetchUrl)
+                        GitUtil.addExclude(moduleDir)
+                    } else {
+                        if (moduleDir.list().size() > 0) {
+                            throw new RuntimeException("[repo] - module '$moduleName': failure to clone beacause [$moduleDir.absolutePath] is not an empty directory.")
+                        }
+
+                        String originUrl = repositoryInfo.fetchUrl
+                        println "[repo] - module '$moduleName': git clone $originUrl -b $repositoryInfo.branch"
+                        GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
+                        if (repositoryInfo.pushUrl != repositoryInfo.fetchUrl) {
+                            GitUtil.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
+                        }
+                        GitUtil.addExclude(moduleDir)
+                    }
                 }
             } else {
                 moduleDir.mkdirs()
@@ -107,11 +148,15 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 String originUrl = repositoryInfo.fetchUrl
                 println "[repo] - module '$moduleName': git clone $originUrl -b $repositoryInfo.branch"
                 GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
+                if (repositoryInfo.pushUrl != repositoryInfo.fetchUrl) {
+                    GitUtil.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
+                }
+                GitUtil.addExclude(moduleDir)
             }
         }
 
         if (initialized) {
-            RepoUtil.updateExclude(projectDir, repoInfo)
+            GitUtil.updateExclude(projectDir, repoInfo)
         }
 
         RepoUtil.saveRepoManifest(projectDir, repoInfo)

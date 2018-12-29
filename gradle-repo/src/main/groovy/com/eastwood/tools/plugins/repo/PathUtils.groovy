@@ -1,7 +1,5 @@
 package com.eastwood.tools.plugins.repo;
 
-import java.io.File;
-
 /**
  * General filename and filepath manipulation utilities.
  * <p>
@@ -217,7 +215,7 @@ public class PathUtils {
      * The output will be the same on both Unix and Windows including
      * the separator character.
      *
-     * @param filename      the filename to normalize, null returns null
+     * @param filename the filename to normalize, null returns null
      * @param unixSeparator {@code true} if a unix separator should
      *                      be used or {@code false} if a windows separator should be used.
      * @return the normalized filename, or null if invalid. Null bytes inside string will be removed
@@ -231,8 +229,8 @@ public class PathUtils {
     /**
      * Internal method to perform the normalization.
      *
-     * @param filename      the filename
-     * @param separator     The separator character to use
+     * @param filename the filename
+     * @param separator The separator character to use
      * @param keepSeparator true to keep the final separator
      * @return the normalized filename. Null bytes inside string will be removed.
      */

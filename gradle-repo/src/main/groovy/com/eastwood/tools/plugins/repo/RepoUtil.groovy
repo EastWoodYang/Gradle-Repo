@@ -20,7 +20,7 @@ class RepoUtil {
     static RepoInfo getRepoInfo(File projectDir, boolean withDependencies) {
         File repoFile = new File(projectDir, 'repo.xml')
         if (!repoFile.exists()) {
-            throw new GradleException("[repo] - can not found repo.xml under " + projectDir.absolutePath)
+            throw new GradleException("[repo] - repo.xml not found under " + projectDir.absolutePath)
         }
 
         RepoInfo repoInfo = parseRepo(repoFile, withDependencies)
@@ -106,46 +106,54 @@ class RepoUtil {
         DefaultInfo defaultInfo = null
         NodeList defaultNodeList = rootElement.getElementsByTagName("default")
         if (defaultNodeList.getLength() > 1) {
-            throw new GradleException("[repo] - there are multiple '<default />' element.")
+            throw new RuntimeException("[repo] - Make sure there is only one '<default />' element in repo.xml")
         } else if (defaultNodeList.getLength() == 1) {
             defaultInfo = new DefaultInfo()
             Element defaultElement = (Element) defaultNodeList.item(0)
             defaultInfo.branch = defaultElement.getAttribute('branch')
             defaultInfo.fetchUrl = defaultElement.getAttribute('fetch')
             defaultInfo.pushUrl = defaultElement.getAttribute('push')
-            if (defaultInfo.pushUrl.isEmpty()) {
+            if (defaultInfo.pushUrl.trim().isEmpty()) {
                 defaultInfo.pushUrl = defaultInfo.fetchUrl
             }
         }
 
-        ProjectInfo projectInfo = new ProjectInfo()
+        repoInfo.projectInfo = new ProjectInfo()
+        repoInfo.projectInfo.includeModuleList = new ArrayList<>()
         // project repository info
         NodeList projectNodeList = rootElement.getElementsByTagName("project")
         if (projectNodeList.getLength() > 1) {
-            throw new GradleException("[repo] - there are multiple '<project />' element.")
-        } else if (projectNodeList.getLength() == 0) {
-            throw new GradleException("[repo] - can not found '<project />' element.")
+            throw new RuntimeException("[repo] - Make sure there is only one '<project />' element in repo.xml")
+        } else if (projectNodeList.getLength() == 1) {
+            Element projectElement = (Element) projectNodeList.item(0)
+            RepositoryInfo projectRepositoryInfo = getProjectRepositoryInfo(defaultInfo, projectElement)
+            repoInfo.projectInfo.repositoryInfo = projectRepositoryInfo
+            // project include module
+            NodeList includeModuleNodeList = projectElement.getElementsByTagName("include")
+            for (int i = 0; i < includeModuleNodeList.getLength(); i++) {
+                Element includeModuleElement = (Element) includeModuleNodeList.item(i)
+                String moduleName = includeModuleElement.getAttribute("name")
+                repoInfo.projectInfo.includeModuleList.add(moduleName.trim())
+            }
         }
-
-        Element projectElement = (Element) projectNodeList.item(0)
-        RepositoryInfo projectRepositoryInfo = getProjectRepositoryInfo(defaultInfo, projectElement)
-        projectInfo.repositoryInfo = projectRepositoryInfo
-        // project include module
-        projectInfo.includeModuleList = new ArrayList<>()
-        NodeList includeModuleNodeList = projectElement.getElementsByTagName("include")
-        for (int i = 0; i < includeModuleNodeList.getLength(); i++) {
-            Element includeModuleElement = (Element) includeModuleNodeList.item(i)
-            String moduleName = includeModuleElement.getAttribute("name")
-            projectInfo.includeModuleList.add(moduleName.trim())
-        }
-        repoInfo.projectInfo = projectInfo
 
         if (defaultInfo == null) {
             defaultInfo = new DefaultInfo()
-            defaultInfo.branch = projectRepositoryInfo.branch
-            String fetchUrl = projectRepositoryInfo.fetchUrl
-            defaultInfo.fetchUrl = fetchUrl
-            defaultInfo.pushUrl = fetchUrl
+            RepositoryInfo projectRepositoryInfo = repoInfo.projectInfo.repositoryInfo
+            if (projectRepositoryInfo != null) {
+                defaultInfo.branch = projectRepositoryInfo.branch
+                String fetchUrl = projectRepositoryInfo.fetchUrl
+                if (fetchUrl.startsWith("git@")) {
+                    String[] temp = fetchUrl.split(":")
+                    defaultInfo.fetchUrl = temp[0] + ':' + temp[1].substring(0, temp[1].lastIndexOf('/'))
+                } else {
+                    URI uri = new URI(fetchUrl)
+                    String path = uri.getPath();
+                    String parent = path.substring(0, path.lastIndexOf('/'))
+                    defaultInfo.fetchUrl = fetchUrl.replace(uri.getPath(), "") + parent
+                }
+                defaultInfo.pushUrl = defaultInfo.fetchUrl
+            }
         }
         repoInfo.defaultInfo = defaultInfo
 
@@ -156,7 +164,7 @@ class RepoUtil {
             ModuleInfo moduleInfo = getModuleRepositoryInfo(defaultInfo, moduleElement)
             if (withDependencies) {
                 moduleInfo.dependencyMap = getModuleDependenciesInfo(repoInfo.configurations, moduleElement)
-                if (!moduleInfo.substitute.isEmpty()) {
+                if (!moduleInfo.substitute.trim().isEmpty()) {
                     repoInfo.configurations.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
                 }
             }
@@ -199,7 +207,7 @@ class RepoUtil {
                 moduleInfo.fromLocal = true
                 if (withDependencies) {
                     moduleInfo.dependencyMap = getModuleDependenciesInfo(repoInfo.configurations, moduleElement)
-                    if (!moduleInfo.substitute.isEmpty()) {
+                    if (!moduleInfo.substitute.trim().isEmpty()) {
                         repoInfo.configurations.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
                     }
                 }
@@ -210,7 +218,7 @@ class RepoUtil {
 
     static RepositoryInfo getProjectRepositoryInfo(DefaultInfo defaultInfo, Element element) {
         String origin = element.getAttribute('origin')
-        if (origin.isEmpty()) {
+        if (origin.trim().isEmpty()) {
             return null
         }
 
@@ -221,12 +229,12 @@ class RepoUtil {
             if (defaultInfo != null && defaultInfo.fetchUrl != null) {
                 repositoryInfo = filterOrigin(defaultInfo, origin)
             } else {
-                throw new RuntimeException("[repo] - '<project />' element [origin] is not valid.")
+                throw new RuntimeException("[repo] - The 'origin' attribute value of the '<project />' element is invalid.")
             }
         }
 
         String branch = element.getAttribute("branch")
-        if (branch.isEmpty()) {
+        if (branch.trim().isEmpty()) {
             if (defaultInfo != null && defaultInfo.branch != null) {
                 branch = defaultInfo.branch
             } else {
@@ -240,13 +248,13 @@ class RepoUtil {
     static ModuleInfo getModuleRepositoryInfo(DefaultInfo defaultInfo, Element element) {
         ModuleInfo moduleInfo = new ModuleInfo()
         String name = element.getAttribute("name")
-        if (name.isEmpty()) {
-            throw new IllegalArgumentException("[repo] - '<module />' element [name] is not set.")
+        if (name.trim().isEmpty()) {
+            throw new IllegalArgumentException("[repo] - The 'name' attribute value of the '<module />' element is not configured.")
         }
         moduleInfo.name = name
 
         String local = element.getAttribute("local")
-        if (local.isEmpty()) {
+        if (local.trim().isEmpty()) {
             local = "./"
         }
         moduleInfo.local = local
@@ -254,7 +262,7 @@ class RepoUtil {
         moduleInfo.substitute = element.getAttribute('substitute')
 
         String origin = element.getAttribute("origin")
-        if (origin.isEmpty()) {
+        if (origin.trim().isEmpty()) {
             return moduleInfo
         }
 
@@ -263,14 +271,14 @@ class RepoUtil {
             repositoryInfo = filterOrigin(origin)
         } else {
             if (defaultInfo != null && defaultInfo.fetchUrl != null) {
-                repositoryInfo = filterOrigin(defaultInfo.fetchUrl + '/./' + origin)
+                repositoryInfo = filterOrigin(defaultInfo, origin)
             } else {
-                throw new RuntimeException("[repo] - '<module />' element [origin] is not valid.")
+                throw new RuntimeException("[repo] - The 'origin' attribute value of the '<module />' element is invalid.")
             }
         }
 
         String branch = element.getAttribute("branch")
-        if (branch.isEmpty()) {
+        if (branch.trim().isEmpty()) {
             if (defaultInfo != null && defaultInfo.branch != null) {
                 branch = defaultInfo.branch
             } else {
@@ -414,44 +422,6 @@ class RepoUtil {
         return ""
     }
 
-    static updateExclude(File projectDir, RepoInfo repoInfo) {
-        List<String> ignoreModules = new ArrayList<>()
-        List<String> includeModules = new ArrayList<>()
-
-        ignoreModules.add('repo-local.xml')
-        ignoreModules.add('*.iml')
-
-        repoInfo.moduleInfoMap.each {
-            def moduleDir = getModuleDir(projectDir, it.value)
-            def moduleName = getModuleName(projectDir, moduleDir)
-            String ignoreModule = moduleName.replace(":", "/") + "/"
-            if (ignoreModule.startsWith("/")) {
-                ignoreModule = ignoreModule.substring(1)
-            }
-
-            if (repoInfo.projectInfo.includeModuleList.contains(it.key)) {
-                includeModules.add(ignoreModule)
-            } else {
-                ignoreModules.add(ignoreModule)
-            }
-        }
-
-        File excludeFile = new File(projectDir, '.git/info/exclude')
-        String exclude = ""
-        excludeFile.eachLine {
-            def item = it.trim()
-            if (includeModules.contains(item)) {
-                return
-            }
-            ignoreModules.remove(item)
-            exclude += item + "\n"
-        }
-        ignoreModules.each {
-            exclude += it + "\n"
-        }
-        excludeFile.write(exclude)
-    }
-
     static RepoInfo getLastRepoManifest(File rootProjectDir) {
         RepoInfo repoInfo = new RepoInfo()
         repoInfo.moduleInfoMap = new HashMap<>()
@@ -471,11 +441,11 @@ class RepoUtil {
         NodeList projectNodeList = rootElement.getElementsByTagName("project")
         Element projectElement = (Element) projectNodeList.item(0)
 
-        if (!projectElement.getAttribute('fetch').isEmpty()) {
+        if (!projectElement.getAttribute('fetch').trim().isEmpty()) {
             RepositoryInfo repositoryInfo = new RepositoryInfo()
             repositoryInfo.fetchUrl = projectElement.getAttribute('fetch')
             repositoryInfo.pushUrl = projectElement.getAttribute('push')
-            if (repositoryInfo.pushUrl.isEmpty()) {
+            if (repositoryInfo.pushUrl.trim().isEmpty()) {
                 repositoryInfo.pushUrl = repositoryInfo.fetchUrl
             }
             repositoryInfo.branch = projectElement.getAttribute('branch')
@@ -501,11 +471,11 @@ class RepoUtil {
             moduleInfo.local = moduleElement.getAttribute('local')
             moduleInfo.fromLocal = moduleElement.getAttribute('fromLocal')
 
-            if (!moduleElement.getAttribute('fetch').isEmpty()) {
+            if (!moduleElement.getAttribute('fetch').trim().isEmpty()) {
                 RepositoryInfo repositoryInfo = new RepositoryInfo()
                 repositoryInfo.fetchUrl = moduleElement.getAttribute('fetch')
                 repositoryInfo.pushUrl = moduleElement.getAttribute('push')
-                if (repositoryInfo.pushUrl.isEmpty()) {
+                if (repositoryInfo.pushUrl.trim().isEmpty()) {
                     repositoryInfo.pushUrl = repositoryInfo.fetchUrl
                 }
                 repositoryInfo.branch = moduleElement.getAttribute('branch')
@@ -525,19 +495,20 @@ class RepoUtil {
 
         Element projectElement = document.createElement("project")
         manifestElement.appendChild(projectElement)
-        if (repoInfo.projectInfo != null) {
+
+        if (repoInfo.projectInfo.repositoryInfo != null) {
             projectElement.setAttribute("fetchUrl", repoInfo.projectInfo.repositoryInfo.fetchUrl)
             if (repoInfo.projectInfo.repositoryInfo.fetchUrl != repoInfo.projectInfo.repositoryInfo.pushUrl) {
                 projectElement.setAttribute("pushUrl", repoInfo.projectInfo.repositoryInfo.pushUrl)
             }
             projectElement.setAttribute('branch', repoInfo.projectInfo.repositoryInfo.branch)
+        }
 
-            if (repoInfo.projectInfo.includeModuleList != null) {
-                repoInfo.projectInfo.includeModuleList.each {
-                    Element includeElement = document.createElement("include")
-                    includeElement.setAttribute("name", it)
-                    projectElement.appendChild(includeElement)
-                }
+        if (repoInfo.projectInfo.includeModuleList != null) {
+            repoInfo.projectInfo.includeModuleList.each {
+                Element includeElement = document.createElement("include")
+                includeElement.setAttribute("name", it)
+                projectElement.appendChild(includeElement)
             }
         }
 
@@ -550,7 +521,7 @@ class RepoUtil {
             if (moduleInfo.local != './') {
                 moduleElement.setAttribute('local', moduleInfo.local)
             }
-            if (moduleInfo.repositoryInfo != null) {
+            if (moduleInfo.repositoryInfo != null && !repoInfo.projectInfo.includeModuleList.contains(moduleInfo.name)) {
                 moduleElement.setAttribute("fetch", moduleInfo.repositoryInfo.fetchUrl)
                 if (moduleInfo.repositoryInfo.fetchUrl != moduleInfo.repositoryInfo.pushUrl) {
                     moduleElement.setAttribute("pushUrl", moduleInfo.repositoryInfo.pushUrl)
