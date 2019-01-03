@@ -46,69 +46,16 @@ class RepoUtil {
             configurations.excludeList = new ArrayList<>()
             configurations.configurationMap = new HashMap<>()
             configurations.substituteMap = new HashMap<>()
-            NodeList configurationsNodeList = rootElement.getElementsByTagName("configurations")
-            for (int i = 0; i < configurationsNodeList.getLength(); i++) {
-                Element configurationsElement = (Element) configurationsNodeList.item(i)
-
-                NodeList globalNodeList = configurationsElement.getElementsByTagName("global")
-                for (int j = 0; j < globalNodeList.getLength(); j++) {
-                    Element globalElement = (Element) globalNodeList.item(j)
-                    NodeList excludeNodeList = globalElement.getElementsByTagName("exclude")
-                    for (int k = 0; k < excludeNodeList.getLength(); k++) {
-                        Exclude exclude = new Exclude()
-                        Element excludeElement = (Element) excludeNodeList.item(k)
-                        exclude.group = excludeElement.getAttribute('group')
-                        exclude.name = excludeElement.getAttribute('name')
-                        configurations.excludeList.add(exclude)
-                    }
-
-                    NodeList forceNodeList = globalElement.getElementsByTagName("force")
-                    for (int k = 0; k < forceNodeList.getLength(); k++) {
-                        Force force = new Force()
-                        Element forceElement = (Element) forceNodeList.item(k)
-                        force.group = forceElement.getAttribute('group')
-                        force.name = forceElement.getAttribute('name')
-                        force.version = forceElement.getAttribute('version')
-                        configurations.forceList.add(force)
-                    }
-                }
-
-                NodeList configurationNodeList = configurationsElement.getElementsByTagName("configuration")
-                for (int j = 0; j < configurationNodeList.getLength(); j++) {
-                    Element configurationElement = (Element) configurationNodeList.item(j)
-                    String name = configurationElement.getAttribute('name')
-                    Configuration configuration = configurations.configurationMap.get(name)
-                    if (configuration == null) {
-                        configuration = new Configuration()
-                        configuration.name = name
-                        configurations.configurationMap.put(name, configuration)
-                    }
-
-                    String transitive = configurationElement.getAttribute("transitive")
-                    configuration.transitive = transitive.trim() != 'false'
-
-                    if (configuration.excludeList == null) {
-                        configuration.excludeList = new ArrayList<>()
-                    }
-                    NodeList excludeNodeList = configurationElement.getElementsByTagName("exclude")
-                    for (int k = 0; k < excludeNodeList.getLength(); k++) {
-                        Exclude exclude = new Exclude()
-                        Element excludeElement = (Element) excludeNodeList.item(k)
-                        exclude.group = excludeElement.getAttribute('group')
-                        exclude.name = excludeElement.getAttribute('name')
-                        configuration.excludeList.add(exclude)
-                    }
-                }
-            }
             repoInfo.configurations = configurations
+            getConfigurations(configurations, rootElement)
         }
 
-        DefaultInfo defaultInfo = null
+        RepositoryInfo defaultInfo = null
         NodeList defaultNodeList = rootElement.getElementsByTagName("default")
         if (defaultNodeList.getLength() > 1) {
             throw new RuntimeException("[repo] - Make sure there is only one '<default />' element in repo.xml")
         } else if (defaultNodeList.getLength() == 1) {
-            defaultInfo = new DefaultInfo()
+            defaultInfo = new RepositoryInfo()
             Element defaultElement = (Element) defaultNodeList.item(0)
             defaultInfo.branch = defaultElement.getAttribute('branch')
             defaultInfo.fetchUrl = defaultElement.getAttribute('fetch')
@@ -138,7 +85,7 @@ class RepoUtil {
         }
 
         if (defaultInfo == null) {
-            defaultInfo = new DefaultInfo()
+            defaultInfo = new RepositoryInfo()
             RepositoryInfo projectRepositoryInfo = repoInfo.projectInfo.repositoryInfo
             if (projectRepositoryInfo != null) {
                 defaultInfo.branch = projectRepositoryInfo.branch
@@ -174,12 +121,17 @@ class RepoUtil {
         return repoInfo
     }
 
-    private static RepoInfo parseRepoLocal(RepoInfo repoInfo, File repoLocalFile, boolean withDependencies) {
+    private
+    static RepoInfo parseRepoLocal(RepoInfo repoInfo, File repoLocalFile, boolean withDependencies) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance()
         DocumentBuilder builder = factory.newDocumentBuilder()
         FileInputStream inputStream = new FileInputStream(repoLocalFile)
         Document doc = builder.parse(inputStream)
         Element rootElement = doc.getDocumentElement()
+
+        if (withDependencies) {
+            getConfigurations(repoInfo.configurations, rootElement)
+        }
 
         NodeList moduleNodeList = rootElement.getElementsByTagName("module")
         for (int i = 0; i < moduleNodeList.getLength(); i++) {
@@ -216,7 +168,65 @@ class RepoUtil {
         }
     }
 
-    static RepositoryInfo getProjectRepositoryInfo(DefaultInfo defaultInfo, Element element) {
+    private
+    static Configurations getConfigurations(Configurations configurations, Element element) {
+        NodeList configurationsNodeList = element.getElementsByTagName("configurations")
+        for (int i = 0; i < configurationsNodeList.getLength(); i++) {
+            Element configurationsElement = (Element) configurationsNodeList.item(i)
+
+            NodeList globalNodeList = configurationsElement.getElementsByTagName("global")
+            for (int j = 0; j < globalNodeList.getLength(); j++) {
+                Element globalElement = (Element) globalNodeList.item(j)
+                NodeList excludeNodeList = globalElement.getElementsByTagName("exclude")
+                for (int k = 0; k < excludeNodeList.getLength(); k++) {
+                    Exclude exclude = new Exclude()
+                    Element excludeElement = (Element) excludeNodeList.item(k)
+                    exclude.group = excludeElement.getAttribute('group')
+                    exclude.name = excludeElement.getAttribute('name')
+                    configurations.excludeList.add(exclude)
+                }
+
+                NodeList forceNodeList = globalElement.getElementsByTagName("force")
+                for (int k = 0; k < forceNodeList.getLength(); k++) {
+                    Force force = new Force()
+                    Element forceElement = (Element) forceNodeList.item(k)
+                    force.group = forceElement.getAttribute('group')
+                    force.name = forceElement.getAttribute('name')
+                    force.version = forceElement.getAttribute('version')
+                    configurations.forceList.add(force)
+                }
+            }
+
+            NodeList configurationNodeList = configurationsElement.getElementsByTagName("configuration")
+            for (int j = 0; j < configurationNodeList.getLength(); j++) {
+                Element configurationElement = (Element) configurationNodeList.item(j)
+                String name = configurationElement.getAttribute('name')
+                Configuration configuration = configurations.configurationMap.get(name)
+                if (configuration == null) {
+                    configuration = new Configuration()
+                    configuration.name = name
+                    configurations.configurationMap.put(name, configuration)
+                }
+
+                String transitive = configurationElement.getAttribute("transitive")
+                configuration.transitive = transitive.trim() != 'false'
+
+                if (configuration.excludeList == null) {
+                    configuration.excludeList = new ArrayList<>()
+                }
+                NodeList excludeNodeList = configurationElement.getElementsByTagName("exclude")
+                for (int k = 0; k < excludeNodeList.getLength(); k++) {
+                    Exclude exclude = new Exclude()
+                    Element excludeElement = (Element) excludeNodeList.item(k)
+                    exclude.group = excludeElement.getAttribute('group')
+                    exclude.name = excludeElement.getAttribute('name')
+                    configuration.excludeList.add(exclude)
+                }
+            }
+        }
+    }
+
+    static RepositoryInfo getProjectRepositoryInfo(RepositoryInfo defaultInfo, Element element) {
         String origin = element.getAttribute('origin')
         if (origin.trim().isEmpty()) {
             return null
@@ -245,11 +255,11 @@ class RepoUtil {
         return repositoryInfo
     }
 
-    static ModuleInfo getModuleRepositoryInfo(DefaultInfo defaultInfo, Element element) {
+    static ModuleInfo getModuleRepositoryInfo(RepositoryInfo defaultInfo, Element element) {
         ModuleInfo moduleInfo = new ModuleInfo()
         String name = element.getAttribute("name")
         if (name.trim().isEmpty()) {
-            throw new IllegalArgumentException("[repo] - The 'name' attribute value of the '<module />' element is not configured.")
+            throw new RuntimeException("[repo] - The 'name' attribute value of the '<module />' element is not configured.")
         }
         moduleInfo.name = name
 
@@ -346,7 +356,7 @@ class RepoUtil {
         return dependenciesMap
     }
 
-    static RepositoryInfo filterOrigin(DefaultInfo defaultInfo, String origin) {
+    static RepositoryInfo filterOrigin(RepositoryInfo defaultInfo, String origin) {
         RepositoryInfo repositoryInfo = new RepositoryInfo()
         if (defaultInfo.fetchUrl == defaultInfo.pushUrl) {
             String fetchUrl = defaultInfo.fetchUrl + '/./' + origin
