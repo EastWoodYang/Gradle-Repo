@@ -1,4 +1,4 @@
-package com.eastwood.tools.plugins.repo;
+package com.eastwood.tools.plugins.repo.utils;
 
 /**
  * General filename and filepath manipulation utilities.

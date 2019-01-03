@@ -1,14 +1,15 @@
 includeBuild('gradle-repo')
 
 buildscript {
-
-    repositories {
-        jcenter()
-    }
-
     dependencies {
-        classpath files('./gradle-repo/build/libs/gradle-repo.jar')
+        def jar = file('./gradle-repo/build/libs/gradle-repo.jar')
+        ext.hasGenerated = jar.exists()
+        if (ext.hasGenerated) {
+            classpath files(jar)
+        }
     }
 }
 
-apply plugin: 'gradle-repo-settings'
+if (buildscript.dependencies.ext.hasGenerated) {
+    apply plugin: 'gradle-repo-settings'
+}

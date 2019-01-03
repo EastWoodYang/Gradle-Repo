@@ -3,6 +3,8 @@ package com.eastwood.tools.plugins.repo
 import com.eastwood.tools.plugins.repo.model.ModuleInfo
 import com.eastwood.tools.plugins.repo.model.RepoInfo
 import com.eastwood.tools.plugins.repo.model.RepositoryInfo
+import com.eastwood.tools.plugins.repo.utils.GitUtils
+import com.eastwood.tools.plugins.repo.utils.RepoUtils
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
 
@@ -15,101 +17,101 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         this.settings = settings
         projectDir = settings.rootProject.projectDir
 
-        RepoInfo lastRepoInfo = RepoUtil.getLastRepoManifest(projectDir)
-        RepoInfo repoInfo = RepoUtil.getRepoInfo(projectDir, false)
+        RepoInfo lastRepoInfo = RepoUtils.getLastRepoManifest(projectDir)
+        RepoInfo repoInfo = RepoUtils.getRepoInfo(projectDir, false)
 
-        boolean initialized = GitUtil.isGitDir(projectDir)
+        boolean initialized = GitUtils.isGitDir(projectDir)
         if (initialized) {
             RepositoryInfo projectRepositoryInfo = repoInfo.projectInfo.repositoryInfo
             if (projectRepositoryInfo != null) {
-                String fetchUrl = GitUtil.getOriginRemoteFetchUrl(projectDir)
+                String fetchUrl = GitUtils.getOriginRemoteFetchUrl(projectDir)
                 if (fetchUrl != projectRepositoryInfo.fetchUrl) {
-                    GitUtil.setOriginRemoteUrl(projectDir, projectRepositoryInfo.fetchUrl)
+                    GitUtils.setOriginRemoteUrl(projectDir, projectRepositoryInfo.fetchUrl)
                 }
 
-                String pushUrl = GitUtil.getOriginRemotePushUrl(projectDir)
+                String pushUrl = GitUtils.getOriginRemotePushUrl(projectDir)
                 if (pushUrl != projectRepositoryInfo.pushUrl) {
-                    GitUtil.setOriginRemotePushUrl(projectDir, projectRepositoryInfo.pushUrl)
+                    GitUtils.setOriginRemotePushUrl(projectDir, projectRepositoryInfo.pushUrl)
                 }
 
-                if (GitUtil.isBranchChanged(projectDir, projectRepositoryInfo.branch)) {
+                if (GitUtils.isBranchChanged(projectDir, projectRepositoryInfo.branch)) {
                     isProjectClean()
-                    if (GitUtil.isLocalBranch(projectDir, projectRepositoryInfo.branch)) {
-                        GitUtil.revertRepoFile(projectDir)
-                        GitUtil.checkoutBranch(projectDir, projectRepositoryInfo.branch)
+                    if (GitUtils.isLocalBranch(projectDir, projectRepositoryInfo.branch)) {
+                        GitUtils.revertRepoFile(projectDir)
+                        GitUtils.checkoutBranch(projectDir, projectRepositoryInfo.branch)
                         println "[repo] - project '${settings.rootProject.getName()}': git checkout $projectRepositoryInfo.branch"
                     } else {
-                        if (GitUtil.isRemoteBranch(projectDir, projectRepositoryInfo.branch)) {
-                            GitUtil.revertRepoFile(projectDir)
-                            GitUtil.checkoutRemoteBranch(projectDir, projectRepositoryInfo.branch)
+                        if (GitUtils.isRemoteBranch(projectDir, projectRepositoryInfo.branch)) {
+                            GitUtils.revertRepoFile(projectDir)
+                            GitUtils.checkoutRemoteBranch(projectDir, projectRepositoryInfo.branch)
                             println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch origin/$projectRepositoryInfo.branch"
                         } else {
-                            GitUtil.checkoutNewBranch(projectDir, projectRepositoryInfo.branch)
-                            GitUtil.commitRepoFile(projectDir)
+                            GitUtils.checkoutNewBranch(projectDir, projectRepositoryInfo.branch)
+                            GitUtils.commitRepoFile(projectDir)
                             println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch"
                         }
                     }
-                    repoInfo = RepoUtil.getRepoInfo(projectDir, false)
+                    repoInfo = RepoUtils.getRepoInfo(projectDir, false)
                 }
             } else {
                 initialized = false
-                GitUtil.clearGitDir(projectDir)
+                GitUtils.clearGitDir(projectDir)
             }
         } else {
             if (repoInfo.projectInfo.repositoryInfo != null) {
-                GitUtil.init(projectDir)
-                GitUtil.commitRepoFile(projectDir)
-                GitUtil.addRemote(projectDir, repoInfo.projectInfo.repositoryInfo.fetchUrl)
+                GitUtils.init(projectDir)
+                GitUtils.commitRepoFile(projectDir)
+                GitUtils.addRemote(projectDir, repoInfo.projectInfo.repositoryInfo.fetchUrl)
             }
         }
 
         repoInfo.moduleInfoMap.each {
             ModuleInfo moduleInfo = it.value
 
-            def moduleDir = RepoUtil.getModuleDir(projectDir, moduleInfo)
-            def moduleName = RepoUtil.getModuleName(projectDir, moduleDir)
+            def moduleDir = RepoUtils.getModuleDir(projectDir, moduleInfo)
+            def moduleName = RepoUtils.getModuleName(projectDir, moduleDir)
 
             // include
             settings.include moduleName
 
             if (repoInfo.projectInfo.includeModuleList.contains(moduleInfo.name)) {
-                GitUtil.clearGitDir(moduleDir)
+                GitUtils.clearGitDir(moduleDir)
                 return
             }
 
             // module
             if (moduleDir.exists()) {
-                boolean moduleInitialized = GitUtil.isGitDir(moduleDir)
+                boolean moduleInitialized = GitUtils.isGitDir(moduleDir)
                 if (moduleInitialized) {
                     if (moduleInfo.repositoryInfo != null) {
-                        String remoteUrl = GitUtil.getOriginRemoteFetchUrl(moduleDir)
+                        String remoteUrl = GitUtils.getOriginRemoteFetchUrl(moduleDir)
                         if (remoteUrl != moduleInfo.repositoryInfo.fetchUrl) {
-                            GitUtil.setOriginRemoteUrl(moduleDir, moduleInfo.repositoryInfo.fetchUrl)
+                            GitUtils.setOriginRemoteUrl(moduleDir, moduleInfo.repositoryInfo.fetchUrl)
                         }
 
-                        String pushUrl = GitUtil.getOriginRemotePushUrl(moduleDir)
+                        String pushUrl = GitUtils.getOriginRemotePushUrl(moduleDir)
                         if (pushUrl != moduleInfo.repositoryInfo.pushUrl) {
-                            GitUtil.setOriginRemotePushUrl(moduleDir, moduleInfo.repositoryInfo.pushUrl)
+                            GitUtils.setOriginRemotePushUrl(moduleDir, moduleInfo.repositoryInfo.pushUrl)
                         }
                     } else {
-                        GitUtil.clearGitDir(moduleDir)
+                        GitUtils.clearGitDir(moduleDir)
                         return
                     }
 
                     String branch = moduleInfo.repositoryInfo.branch
-                    def currentBranchName = GitUtil.getBranchName(moduleDir)
+                    def currentBranchName = GitUtils.getBranchName(moduleDir)
                     if (currentBranchName != branch) {
-                        boolean isClean = GitUtil.isClean(moduleDir)
+                        boolean isClean = GitUtils.isClean(moduleDir)
                         if (isClean) {
-                            if (GitUtil.isLocalBranch(moduleDir, branch)) {
-                                GitUtil.checkoutBranch(moduleDir, branch)
+                            if (GitUtils.isLocalBranch(moduleDir, branch)) {
+                                GitUtils.checkoutBranch(moduleDir, branch)
                                 println "[repo] - module '$moduleName': git checkout $branch"
                             } else {
-                                if (GitUtil.isRemoteBranch(moduleDir, branch)) {
-                                    GitUtil.checkoutRemoteBranch(moduleDir, branch)
+                                if (GitUtils.isRemoteBranch(moduleDir, branch)) {
+                                    GitUtils.checkoutRemoteBranch(moduleDir, branch)
                                     println "[repo] - module '$moduleName': git checkout -b $branch origin/$branch"
                                 } else {
-                                    GitUtil.checkoutNewBranch(moduleDir, branch)
+                                    GitUtils.checkoutNewBranch(moduleDir, branch)
                                     println "[repo] - module '$moduleName': git checkout -b $branch"
                                 }
                             }
@@ -123,9 +125,9 @@ class RepoSettingsPlugin implements Plugin<Settings> {
 
                     ModuleInfo lastModuleInfo = lastRepoInfo.moduleInfoMap.get(moduleInfo.name)
                     if (lastModuleInfo == null || lastModuleInfo.repositoryInfo == null) {
-                        GitUtil.init(moduleDir)
-                        GitUtil.addRemote(moduleDir, repositoryInfo.fetchUrl)
-                        GitUtil.addExclude(moduleDir)
+                        GitUtils.init(moduleDir)
+                        GitUtils.addRemote(moduleDir, repositoryInfo.fetchUrl)
+                        GitUtils.addExclude(moduleDir)
                     } else {
                         if (moduleDir.list().size() > 0) {
                             throw new RuntimeException("[repo] - module '$moduleName': failure to clone beacause [$moduleDir.absolutePath] is not an empty directory.")
@@ -133,11 +135,11 @@ class RepoSettingsPlugin implements Plugin<Settings> {
 
                         String originUrl = repositoryInfo.fetchUrl
                         println "[repo] - module '$moduleName': git clone $originUrl -b $repositoryInfo.branch"
-                        GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
+                        GitUtils.clone(moduleDir, originUrl, repositoryInfo.branch)
                         if (repositoryInfo.pushUrl != repositoryInfo.fetchUrl) {
-                            GitUtil.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
+                            GitUtils.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
                         }
-                        GitUtil.addExclude(moduleDir)
+                        GitUtils.addExclude(moduleDir)
                     }
                 }
             } else {
@@ -147,23 +149,23 @@ class RepoSettingsPlugin implements Plugin<Settings> {
 
                 String originUrl = repositoryInfo.fetchUrl
                 println "[repo] - module '$moduleName': git clone $originUrl -b $repositoryInfo.branch"
-                GitUtil.clone(moduleDir, originUrl, repositoryInfo.branch)
+                GitUtils.clone(moduleDir, originUrl, repositoryInfo.branch)
                 if (repositoryInfo.pushUrl != repositoryInfo.fetchUrl) {
-                    GitUtil.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
+                    GitUtils.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
                 }
-                GitUtil.addExclude(moduleDir)
+                GitUtils.addExclude(moduleDir)
             }
         }
 
         if (initialized) {
-            GitUtil.updateExclude(projectDir, repoInfo)
+            GitUtils.updateExclude(projectDir, repoInfo)
         }
 
-        RepoUtil.saveRepoManifest(projectDir, repoInfo)
+        RepoUtils.saveRepoManifest(projectDir, repoInfo)
     }
 
     boolean isProjectClean() {
-        RepoInfo repoInfo = RepoUtil.getLastRepoManifest(projectDir)
+        RepoInfo repoInfo = RepoUtils.getLastRepoManifest(projectDir)
         // check root project
         def process = ("git status -s").execute(null, projectDir)
         def result = process.waitFor()
@@ -174,7 +176,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         int changeSize = info.size()
         boolean isClean = changeSize == 1 && info.get(0).endsWith('repo.xml')
         if (!isClean) {
-            GitUtil.revertRepoFile(projectDir)
+            GitUtils.revertRepoFile(projectDir)
             throw new RuntimeException("[repo] - project '${settings.rootProject.getName()}': please commit or revert changes before checkout other branch.")
         }
 
@@ -182,13 +184,13 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         repoInfo.moduleInfoMap.each {
             if (repoInfo.projectInfo.includeModuleList.contains(it.key)) return
 
-            File moduleDir = RepoUtil.getModuleDir(projectDir, it.value)
-            if (!GitUtil.isGitDir(moduleDir)) return
+            File moduleDir = RepoUtils.getModuleDir(projectDir, it.value)
+            if (!GitUtils.isGitDir(moduleDir)) return
 
-            isClean = GitUtil.isClean(moduleDir)
+            isClean = GitUtils.isClean(moduleDir)
             if (!isClean) {
-                GitUtil.revertRepoFile(projectDir)
-                throw new RuntimeException("[repo] - module '${RepoUtil.getModuleName(projectDir, moduleDir)}': please commit or revert changes before checkout other branch.")
+                GitUtils.revertRepoFile(projectDir)
+                throw new RuntimeException("[repo] - module '${RepoUtils.getModuleName(projectDir, moduleDir)}': please commit or revert changes before checkout other branch.")
             }
         }
     }

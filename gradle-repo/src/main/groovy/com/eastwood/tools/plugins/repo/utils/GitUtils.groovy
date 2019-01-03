@@ -1,8 +1,8 @@
-package com.eastwood.tools.plugins.repo
+package com.eastwood.tools.plugins.repo.utils
 
 import com.eastwood.tools.plugins.repo.model.RepoInfo
 
-class GitUtil {
+class GitUtils {
 
     static void init(File dir) {
         def process = ("git init").execute(null, dir)
@@ -217,8 +217,8 @@ class GitUtil {
         ignoreModules.add('*.iml')
 
         repoInfo.moduleInfoMap.each {
-            def moduleDir = RepoUtil.getModuleDir(projectDir, it.value)
-            def moduleName = RepoUtil.getModuleName(projectDir, moduleDir)
+            def moduleDir = RepoUtils.getModuleDir(projectDir, it.value)
+            def moduleName = RepoUtils.getModuleName(projectDir, moduleDir)
             String ignoreModule = moduleName.replace(":", "/") + "/"
             if (ignoreModule.startsWith("/")) {
                 ignoreModule = ignoreModule.substring(1)

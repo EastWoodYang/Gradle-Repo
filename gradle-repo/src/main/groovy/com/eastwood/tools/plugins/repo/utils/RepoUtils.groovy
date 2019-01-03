@@ -1,4 +1,4 @@
-package com.eastwood.tools.plugins.repo
+package com.eastwood.tools.plugins.repo.utils
 
 import com.eastwood.tools.plugins.repo.model.*
 import org.gradle.api.GradleException
@@ -15,7 +15,7 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
-class RepoUtil {
+class RepoUtils {
 
     static RepoInfo getRepoInfo(File projectDir, boolean withDependencies) {
         File repoFile = new File(projectDir, 'repo.xml')
@@ -121,8 +121,7 @@ class RepoUtil {
         return repoInfo
     }
 
-    private
-    static RepoInfo parseRepoLocal(RepoInfo repoInfo, File repoLocalFile, boolean withDependencies) {
+    private static RepoInfo parseRepoLocal(RepoInfo repoInfo, File repoLocalFile, boolean withDependencies) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance()
         DocumentBuilder builder = factory.newDocumentBuilder()
         FileInputStream inputStream = new FileInputStream(repoLocalFile)
@@ -168,8 +167,7 @@ class RepoUtil {
         }
     }
 
-    private
-    static Configurations getConfigurations(Configurations configurations, Element element) {
+    private static Configurations getConfigurations(Configurations configurations, Element element) {
         NodeList configurationsNodeList = element.getElementsByTagName("configurations")
         for (int i = 0; i < configurationsNodeList.getLength(); i++) {
             Element configurationsElement = (Element) configurationsNodeList.item(i)

@@ -4,6 +4,7 @@ import com.eastwood.tools.plugins.repo.model.Configuration
 import com.eastwood.tools.plugins.repo.model.Dependency
 import com.eastwood.tools.plugins.repo.model.ModuleInfo
 import com.eastwood.tools.plugins.repo.model.RepoInfo
+import com.eastwood.tools.plugins.repo.utils.RepoUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ExcludeRule
@@ -19,7 +20,7 @@ class RepoBuildPlugin implements Plugin<Project> {
         projectDir = project.rootProject.projectDir
 
         project.afterEvaluate {
-            RepoInfo repoInfo = RepoUtil.getRepoInfo(projectDir, true)
+            RepoInfo repoInfo = RepoUtils.getRepoInfo(projectDir, true)
 
             project.getAllprojects().each {
                 def currentProject = it
@@ -72,8 +73,8 @@ class RepoBuildPlugin implements Plugin<Project> {
                                         if (dependencyModuleInfo == null) {
                                             throw new RuntimeException("[repo] - can not find module with name [${it.name}].")
                                         }
-                                        def moduleDir = RepoUtil.getModuleDir(projectDir, dependencyModuleInfo)
-                                        def moduleName = RepoUtil.getModuleName(projectDir, moduleDir)
+                                        def moduleDir = RepoUtils.getModuleDir(projectDir, dependencyModuleInfo)
+                                        def moduleName = RepoUtils.getModuleName(projectDir, moduleDir)
                                         dependencySubstitution.substitute(dependencySubstitution.module(it.value)).with(dependencySubstitution.project(moduleName))
                                     }
                                 }
@@ -90,8 +91,8 @@ class RepoBuildPlugin implements Plugin<Project> {
                                     if (dependencyModuleInfo == null) {
                                         throw new RuntimeException("[repo] - can not find module with name [${it.name}].")
                                     }
-                                    def moduleDir = RepoUtil.getModuleDir(projectDir, dependencyModuleInfo)
-                                    def moduleName = RepoUtil.getModuleName(projectDir, moduleDir)
+                                    def moduleDir = RepoUtils.getModuleDir(projectDir, dependencyModuleInfo)
+                                    def moduleName = RepoUtils.getModuleName(projectDir, moduleDir)
                                     moduleDependency = currentProject.dependencies.add(type, currentProject.project(moduleName))
 
                                 } else if (!it.group.isEmpty() && !it.name.isEmpty() && !it.version.isEmpty()) {
