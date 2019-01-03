@@ -14,9 +14,9 @@
     <module name="library" origin="xxx/xxx.git">
         <dependencies>
             <implementation name="xxx" group="xxx.xxx.xxx" version="x.x.x">
-                <enclude name="xxx" />
-                <enclude group="xxx.xxx.xxx" />
-                <enclude name="xxx" group="xxx.xxx.xxx" />
+                <exclude name="xxx" />
+                <exclude group="xxx.xxx.xxx" />
+                <exclude name="xxx" group="xxx.xxx.xxx" />
             </implementation>
         </dependencies>
     </module>

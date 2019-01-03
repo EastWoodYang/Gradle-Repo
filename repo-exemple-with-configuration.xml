@@ -3,15 +3,15 @@
 
     <configurations>
         <global>
-            <enclude name="xxx" />
-            <enclude group="xxx.xxx.xxx" />
-            <enclude name="xxx" group="xxx.xxx.xxx" />
+            <exclude name="xxx" />
+            <exclude group="xxx.xxx.xxx" />
+            <exclude name="xxx" group="xxx.xxx.xxx" />
 
             <force name="xxx" group="xxx.xxx.xxx" version="x.x.x" />
         </global>
 
         <configuration name="xxx">
-            <enclude />
+            <exclude />
         </configuration>
 
         <configuration name="implementation" transitive="false" />
