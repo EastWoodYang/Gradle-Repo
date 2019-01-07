@@ -17,6 +17,8 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         this.settings = settings
         projectDir = settings.rootProject.projectDir
 
+        clearSettingsIncludeIfAddNewModule()
+
         RepoInfo lastRepoInfo = RepoUtils.getLastRepoManifest(projectDir)
         RepoInfo repoInfo = RepoUtils.getRepoInfo(projectDir, false)
 
@@ -81,6 +83,8 @@ class RepoSettingsPlugin implements Plugin<Settings> {
 
             // module
             if (moduleDir.exists()) {
+                GitUtils.removeCachedDir(projectDir, moduleDir.canonicalPath)
+
                 boolean moduleInitialized = GitUtils.isGitDir(moduleDir)
                 if (moduleInitialized) {
                     if (moduleInfo.repositoryInfo != null) {
@@ -191,6 +195,30 @@ class RepoSettingsPlugin implements Plugin<Settings> {
             if (!isClean) {
                 GitUtils.revertRepoFile(projectDir)
                 throw new RuntimeException("[repo] - module '${RepoUtils.getModuleName(projectDir, moduleDir)}': please commit or revert changes before checkout other branch.")
+            }
+        }
+    }
+
+    void clearSettingsIncludeIfAddNewModule() {
+        def settingsFile = new File(projectDir, 'settings.gradle')
+        if (!settingsFile.exists()) return
+
+        def newModuleName = null
+        def content = ''
+        settingsFile.readLines('utf-8').each {
+            def line = it.trim()
+            if (line.startsWith("include ") && line.endsWith("'")) {
+                newModuleName = line.substring(line.indexOf(":") + 1, line.lastIndexOf("'"))
+            } else {
+                content += it + '\n'
+            }
+        }
+
+        if (newModuleName != null) {
+            def newModuleDir = new File(projectDir, newModuleName)
+            if (newModuleDir.exists()) {
+                RepoUtils.addNewModuleElement(projectDir, newModuleName)
+                settingsFile.setText(content, 'utf-8')
             }
         }
     }

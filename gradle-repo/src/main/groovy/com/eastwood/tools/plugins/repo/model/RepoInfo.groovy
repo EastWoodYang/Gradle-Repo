@@ -6,6 +6,6 @@ class RepoInfo {
     ProjectInfo projectInfo
     Map<String, ModuleInfo> moduleInfoMap
 
-    Configurations configurations
+    Map<String, String> substituteMap
 
 }

@@ -47,6 +47,12 @@ class GitUtils {
         }
     }
 
+    static void removeCachedDir(File dir, String moduleDir) {
+        println moduleDir
+        def process = ("git rm -r --cached $moduleDir").execute(null, dir)
+        process.waitFor()
+    }
+
     static String getOriginRemoteFetchUrl(File dir) {
         def process = ("git remote -v").execute(null, dir)
         def result = process.waitFor()

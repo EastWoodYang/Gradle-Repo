@@ -12,9 +12,7 @@
     <module name="app" origin="gradle-repo-app.git">
         <dependencies>
             <api name="mylibrary" />
-            <api name="appcompat-v7" group="com.android.support" version="27.1.1" >
-                <exclude group="com.android.support" />
-            </api>
+            <api name="mylibrary3" />
         </dependencies>
     </module>
 

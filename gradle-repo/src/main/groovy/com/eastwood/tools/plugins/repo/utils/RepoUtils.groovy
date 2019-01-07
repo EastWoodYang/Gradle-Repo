@@ -40,16 +40,6 @@ class RepoUtils {
         Document doc = builder.parse(inputStream)
         Element rootElement = doc.getDocumentElement()
 
-        if (withDependencies) {
-            Configurations configurations = new Configurations()
-            configurations.forceList = new ArrayList<>()
-            configurations.excludeList = new ArrayList<>()
-            configurations.configurationMap = new HashMap<>()
-            configurations.substituteMap = new HashMap<>()
-            repoInfo.configurations = configurations
-            getConfigurations(configurations, rootElement)
-        }
-
         RepositoryInfo defaultInfo = null
         NodeList defaultNodeList = rootElement.getElementsByTagName("default")
         if (defaultNodeList.getLength() > 1) {
@@ -110,9 +100,12 @@ class RepoUtils {
             Element moduleElement = (Element) moduleNodeList.item(i)
             ModuleInfo moduleInfo = getModuleRepositoryInfo(defaultInfo, moduleElement)
             if (withDependencies) {
-                moduleInfo.dependencyMap = getModuleDependenciesInfo(repoInfo.configurations, moduleElement)
+                moduleInfo.dependencyMap = getModuleDependenciesInfo(moduleElement)
                 if (!moduleInfo.substitute.trim().isEmpty()) {
-                    repoInfo.configurations.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
+                    if (repoInfo.substituteMap == null) {
+                        repoInfo.substituteMap = new HashMap<>()
+                    }
+                    repoInfo.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
                 }
             }
             repoInfo.moduleInfoMap.put(moduleInfo.name, moduleInfo)
@@ -128,10 +121,6 @@ class RepoUtils {
         Document doc = builder.parse(inputStream)
         Element rootElement = doc.getDocumentElement()
 
-        if (withDependencies) {
-            getConfigurations(repoInfo.configurations, rootElement)
-        }
-
         NodeList moduleNodeList = rootElement.getElementsByTagName("module")
         for (int i = 0; i < moduleNodeList.getLength(); i++) {
             Element moduleElement = (Element) moduleNodeList.item(i)
@@ -143,7 +132,7 @@ class RepoUtils {
                     if (moduleInfo.dependencyMap == null) {
                         moduleInfo.dependencyMap = new HashMap<>()
                     }
-                    Map<String, List<Dependency>> dependenciesMap = getModuleDependenciesInfo(repoInfo.configurations, moduleElement)
+                    Map<String, List<Dependency>> dependenciesMap = getModuleDependenciesInfo(moduleElement)
                     dependenciesMap.each {
                         List<Dependency> dependencies = moduleInfo.dependencyMap.get(it.key)
                         if (dependencies == null) {
@@ -157,69 +146,15 @@ class RepoUtils {
                 ModuleInfo moduleInfo = getModuleRepositoryInfo(repoInfo.defaultInfo, moduleElement)
                 moduleInfo.fromLocal = true
                 if (withDependencies) {
-                    moduleInfo.dependencyMap = getModuleDependenciesInfo(repoInfo.configurations, moduleElement)
+                    moduleInfo.dependencyMap = getModuleDependenciesInfo(moduleElement)
                     if (!moduleInfo.substitute.trim().isEmpty()) {
-                        repoInfo.configurations.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
+                        if (repoInfo.substituteMap == null) {
+                            repoInfo.substituteMap = new HashMap<>()
+                        }
+                        repoInfo.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
                     }
                 }
                 repoInfo.moduleInfoMap.put(moduleInfo.name, moduleInfo)
-            }
-        }
-    }
-
-    private static Configurations getConfigurations(Configurations configurations, Element element) {
-        NodeList configurationsNodeList = element.getElementsByTagName("configurations")
-        for (int i = 0; i < configurationsNodeList.getLength(); i++) {
-            Element configurationsElement = (Element) configurationsNodeList.item(i)
-
-            NodeList globalNodeList = configurationsElement.getElementsByTagName("global")
-            for (int j = 0; j < globalNodeList.getLength(); j++) {
-                Element globalElement = (Element) globalNodeList.item(j)
-                NodeList excludeNodeList = globalElement.getElementsByTagName("exclude")
-                for (int k = 0; k < excludeNodeList.getLength(); k++) {
-                    Exclude exclude = new Exclude()
-                    Element excludeElement = (Element) excludeNodeList.item(k)
-                    exclude.group = excludeElement.getAttribute('group')
-                    exclude.name = excludeElement.getAttribute('name')
-                    configurations.excludeList.add(exclude)
-                }
-
-                NodeList forceNodeList = globalElement.getElementsByTagName("force")
-                for (int k = 0; k < forceNodeList.getLength(); k++) {
-                    Force force = new Force()
-                    Element forceElement = (Element) forceNodeList.item(k)
-                    force.group = forceElement.getAttribute('group')
-                    force.name = forceElement.getAttribute('name')
-                    force.version = forceElement.getAttribute('version')
-                    configurations.forceList.add(force)
-                }
-            }
-
-            NodeList configurationNodeList = configurationsElement.getElementsByTagName("configuration")
-            for (int j = 0; j < configurationNodeList.getLength(); j++) {
-                Element configurationElement = (Element) configurationNodeList.item(j)
-                String name = configurationElement.getAttribute('name')
-                Configuration configuration = configurations.configurationMap.get(name)
-                if (configuration == null) {
-                    configuration = new Configuration()
-                    configuration.name = name
-                    configurations.configurationMap.put(name, configuration)
-                }
-
-                String transitive = configurationElement.getAttribute("transitive")
-                configuration.transitive = transitive.trim() != 'false'
-
-                if (configuration.excludeList == null) {
-                    configuration.excludeList = new ArrayList<>()
-                }
-                NodeList excludeNodeList = configurationElement.getElementsByTagName("exclude")
-                for (int k = 0; k < excludeNodeList.getLength(); k++) {
-                    Exclude exclude = new Exclude()
-                    Element excludeElement = (Element) excludeNodeList.item(k)
-                    exclude.group = excludeElement.getAttribute('group')
-                    exclude.name = excludeElement.getAttribute('name')
-                    configuration.excludeList.add(exclude)
-                }
             }
         }
     }
@@ -298,7 +233,7 @@ class RepoUtils {
         return moduleInfo
     }
 
-    static Map<String, List<Dependency>> getModuleDependenciesInfo(Configurations configurations, Element element) {
+    static Map<String, List<Dependency>> getModuleDependenciesInfo(Element element) {
         Map<String, List<Dependency>> dependenciesMap = new HashMap<>()
         NodeList dependenciesNodeList = element.getElementsByTagName("dependencies")
         for (int i = 0; i < dependenciesNodeList.getLength(); i++) {
@@ -318,31 +253,6 @@ class RepoUtils {
 
                 Dependency dependency = new Dependency()
                 dependency.name = dependencyElement.getAttribute("name")
-                dependency.group = dependencyElement.getAttribute("group")
-                dependency.version = dependencyElement.getAttribute("version")
-
-                String transitive = dependencyElement.getAttribute("transitive")
-                if (transitive.trim() == 'true') {
-                    dependency.transitive = true
-                } else if (transitive.trim() == 'false') {
-                    dependency.transitive = false
-                } else {
-                    Configuration configuration = configurations.configurationMap.get(configurationName)
-                    if (configuration != null) {
-                        dependency.transitive = configuration.transitive
-                    }
-                }
-
-                dependency.excludes = new ArrayList<>()
-                NodeList excludeNodeList = dependencyElement.getElementsByTagName("exclude")
-                for (int k = 0; k < excludeNodeList.getLength(); k++) {
-                    Element excludeElement = (Element) excludeNodeList.item(k)
-                    Exclude exclude = new Exclude()
-                    exclude.group = excludeElement.getAttribute('group')
-                    exclude.name = excludeElement.getAttribute('name')
-                    dependency.excludes.add(exclude)
-                }
-
                 List<Dependency> dependencies = dependenciesMap.get(configurationName)
                 if (dependencies == null) {
                     dependencies = new ArrayList<>()
@@ -496,7 +406,7 @@ class RepoUtils {
         return repoInfo
     }
 
-    static saveRepoManifest(File rootProjectDir, RepoInfo repoInfo) {
+    static void saveRepoManifest(File rootProjectDir, RepoInfo repoInfo) {
         DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance()
         Document document = builderFactory.newDocumentBuilder().newDocument()
         Element manifestElement = document.createElement("manifest")
@@ -554,5 +464,25 @@ class RepoUtils {
         transformer.setOutputProperty(OutputKeys.CDATA_SECTION_ELEMENTS, "yes")
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
         transformer.transform(new DOMSource(manifestElement), new StreamResult(lastRepoManifest))
+    }
+
+    static void addNewModuleElement(File projectDir, String moduleName) {
+        File repoFile = new File(projectDir, 'repo-local.xml')
+        if (!repoFile.exists()) {
+            repoFile = new File(projectDir, 'repo.xml')
+            if (!repoFile.exists()) {
+                return
+            }
+        }
+
+        def content = ''
+        repoFile.readLines('utf-8').each {
+            def line = it.trim()
+            if (line == '</manifest>') {
+                content += "    <module name=\"$moduleName\" />\n"
+            }
+            content += it + '\n'
+        }
+        repoFile.setText(content, 'utf-8')
     }
 }

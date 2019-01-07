@@ -3,19 +3,18 @@
 
     <default branch="master" fetch="https://github.com/EastWoodYang/" />
 
-    <project origin="gradle-repo">
+    <project origin="xxx.git">
         <include name="library1" />
     </project>
 
     <module name="app" local="./" origin="xxx/xxx.git">
         <dependencies>
-            <implementation name="library" />
-            <implementation name="library1" />
-            <implementation name="xxx" group="xxx.xxx.xxx" version="x.x.x" />
+            <api name="library" />
+            <api name="library1" />
         </dependencies>
     </module>
 
-    <module name="library" branch="xxx" origin="xxx/xxx.git" />
+    <module name="library" branch="xxx" origin="xxx/xxx.git" substitute="xxx.xxx.xxx:xxx:x.x.x" />
 
     <module name="library1" />
 
