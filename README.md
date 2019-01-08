@@ -45,7 +45,7 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
   
 ## Repo Manifest Format
 
-(Repo Manifest Format)[https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo-Manifest-Format] / (Repo清单格式)[https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo%E6%B8%85%E5%8D%95%E6%A0%BC%E5%BC%8F]
+[Repo Manifest Format](https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo-Manifest-Format) / [Repo清单格式](https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo%E6%B8%85%E5%8D%95%E6%A0%BC%E5%BC%8F)
   
 ## Gradle Repo plugin for Android Studio  
 
