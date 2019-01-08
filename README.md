@@ -45,6 +45,7 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
   
 ## Repo Manifest Format
 
+(Repo Manifest Format)[https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo-Manifest-Format] / (Repo清单格式)[https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo%E6%B8%85%E5%8D%95%E6%A0%BC%E5%BC%8F]
   
 ## Gradle Repo plugin for Android Studio  
 
@@ -81,9 +82,11 @@ Plugin detail: https://plugins.jenkins.io/gradle-repo
       
 **How to switch to other feature branches ?**  
   
-    You only need to change the name of the project element branch, and then sync it.   
+    There are two ways:
+    1. change the name of the default element branch, and then sync it.
+    2. change root project branch through Android Studio Git Branches Panel, and then sync it.
       
-    Make sure to commit the code before syncing.  
+    Make sure to commit the code before switch.
   
 ## License  
 ```  
