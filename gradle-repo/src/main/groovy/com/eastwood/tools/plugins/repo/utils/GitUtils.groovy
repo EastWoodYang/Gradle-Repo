@@ -48,7 +48,6 @@ class GitUtils {
     }
 
     static void removeCachedDir(File dir, String moduleDir) {
-        println moduleDir
         def process = ("git rm -r --cached $moduleDir").execute(null, dir)
         process.waitFor()
     }
