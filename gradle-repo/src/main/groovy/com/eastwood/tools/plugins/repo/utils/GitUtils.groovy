@@ -158,7 +158,13 @@ class GitUtils {
         if (branchName == "master") {
             branchName = "HEAD"
         }
-        return new File(dir, ".git/refs/remotes/origin/$branchName").exists()
+
+        process = ("git branch -r").execute(null, dir)
+        result = process.waitFor()
+        if (result != 0) {
+            throw new RuntimeException("[repo] - failure to execute git command [git branch -r] under ${dir.absolutePath}\n message: ${process.err.text}")
+        }
+        return process.text.contains("origin/$branchName")
     }
 
     static void checkoutBranch(File dir, String branchName) {
