@@ -16,7 +16,7 @@ Gradle Repo is a Gradle plugin. it helps us manage the many Git repositories, an
             jcenter()
         }
         dependencies {
-            classpath 'com.eastwood.tools.plugins:gradle-repo:1.0.1'
+            classpath 'com.eastwood.tools.plugins:gradle-repo:1.0.2'
         }
     }
 
