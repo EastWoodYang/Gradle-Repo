@@ -21,10 +21,10 @@ class GitUtils {
     }
 
     static void clone(File dir, String url, String branchName) {
-        def process = ("git clone -b $branchName $url -l $dir.name").execute(null, dir.parentFile)
+        def process = ("git clone --branch $branchName $url -l $dir.name").execute(null, dir.parentFile)
         def result = process.waitFor()
         if (result != 0) {
-            throw new RuntimeException("[repo] - failure to execute git command [git clone -b $branchName $url -l $dir.name] under ${dir.absolutePath}\n message: ${process.err.text}")
+            throw new RuntimeException("[repo] - failure to execute git command [git clone --branch $branchName $url -l $dir.name] under ${dir.absolutePath}\n message: ${process.err.text}")
         }
     }
 

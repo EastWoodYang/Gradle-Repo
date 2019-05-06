@@ -138,7 +138,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                         }
 
                         String originUrl = repositoryInfo.fetchUrl
-                        println "[repo] - module '$moduleName': git clone $originUrl -b $repositoryInfo.branch"
+                        println "[repo] - module '$moduleName': git clone $originUrl --branch $repositoryInfo.branch"
                         GitUtils.clone(moduleDir, originUrl, repositoryInfo.branch)
                         if (repositoryInfo.pushUrl != repositoryInfo.fetchUrl) {
                             GitUtils.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
@@ -152,7 +152,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 if (repositoryInfo == null) return
 
                 String originUrl = repositoryInfo.fetchUrl
-                println "[repo] - module '$moduleName': git clone $originUrl -b $repositoryInfo.branch"
+                println "[repo] - module '$moduleName': git clone $originUrl --branch $repositoryInfo.branch"
                 GitUtils.clone(moduleDir, originUrl, repositoryInfo.branch)
                 if (repositoryInfo.pushUrl != repositoryInfo.fetchUrl) {
                     GitUtils.setOriginRemotePushUrl(moduleDir, repositoryInfo.pushUrl)
