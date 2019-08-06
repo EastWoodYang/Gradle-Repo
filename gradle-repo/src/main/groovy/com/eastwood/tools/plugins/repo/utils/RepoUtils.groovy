@@ -47,7 +47,6 @@ class RepoUtils {
         } else if (defaultNodeList.getLength() == 1) {
             defaultInfo = new RepositoryInfo()
             Element defaultElement = (Element) defaultNodeList.item(0)
-            defaultInfo.branch = defaultElement.getAttribute('branch')
             defaultInfo.fetchUrl = defaultElement.getAttribute('fetch')
             defaultInfo.pushUrl = defaultElement.getAttribute('push')
             if (defaultInfo.pushUrl.trim().isEmpty()) {
@@ -176,15 +175,6 @@ class RepoUtils {
             }
         }
 
-        String branch = element.getAttribute("branch")
-        if (branch.trim().isEmpty()) {
-            if (defaultInfo != null && defaultInfo.branch != null) {
-                branch = defaultInfo.branch
-            } else {
-                branch = "master"
-            }
-        }
-        repositoryInfo.branch = branch
         return repositoryInfo
     }
 
@@ -220,15 +210,6 @@ class RepoUtils {
             }
         }
 
-        String branch = element.getAttribute("branch")
-        if (branch.trim().isEmpty()) {
-            if (defaultInfo != null && defaultInfo.branch != null) {
-                branch = defaultInfo.branch
-            } else {
-                branch = "master"
-            }
-        }
-        repositoryInfo.branch = branch
         moduleInfo.repositoryInfo = repositoryInfo
         return moduleInfo
     }

@@ -36,24 +36,13 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                     GitUtils.setOriginRemotePushUrl(projectDir, projectRepositoryInfo.pushUrl)
                 }
 
-                if (GitUtils.isBranchChanged(projectDir, projectRepositoryInfo.branch)) {
-                    isProjectClean()
-                    if (GitUtils.isLocalBranch(projectDir, projectRepositoryInfo.branch)) {
-                        GitUtils.revertRepoFile(projectDir)
-                        GitUtils.checkoutBranch(projectDir, projectRepositoryInfo.branch)
-                        println "[repo] - project '${settings.rootProject.getName()}': git checkout $projectRepositoryInfo.branch"
-                    } else {
-                        if (GitUtils.isRemoteBranch(projectDir, projectRepositoryInfo.branch)) {
-                            GitUtils.revertRepoFile(projectDir)
-                            GitUtils.checkoutRemoteBranch(projectDir, projectRepositoryInfo.branch)
-                            println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch origin/$projectRepositoryInfo.branch"
-                        } else {
-                            GitUtils.checkoutNewBranch(projectDir, projectRepositoryInfo.branch)
-                            GitUtils.commitRepoFile(projectDir)
-                            println "[repo] - project '${settings.rootProject.getName()}': git checkout -b $projectRepositoryInfo.branch"
-                        }
+                def currentProjectBranch = GitUtils.getBranchName(projectDir)
+                repoInfo.projectInfo.repositoryInfo.branch = currentProjectBranch
+                repoInfo.moduleInfoMap.each {
+                    ModuleInfo moduleInfo = it.value
+                    if(moduleInfo.repositoryInfo != null) {
+                        moduleInfo.repositoryInfo.branch = currentProjectBranch
                     }
-                    repoInfo = RepoUtils.getRepoInfo(projectDir, false)
                 }
             } else {
                 initialized = false
@@ -166,37 +155,6 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         }
 
         RepoUtils.saveRepoManifest(projectDir, repoInfo)
-    }
-
-    boolean isProjectClean() {
-        RepoInfo repoInfo = RepoUtils.getLastRepoManifest(projectDir)
-        // check root project
-        def process = ("git status -s").execute(null, projectDir)
-        def result = process.waitFor()
-        if (result != 0) {
-            throw new RuntimeException("[repo] - failure to execute git command [git status -s] under ${projectDir.absolutePath}\n message: ${process.err.text}")
-        }
-        def info = process.text.readLines()
-        int changeSize = info.size()
-        boolean isClean = changeSize == 1 && info.get(0).endsWith('repo.xml')
-        if (!isClean) {
-            GitUtils.revertRepoFile(projectDir)
-            throw new RuntimeException("[repo] - project '${settings.rootProject.getName()}': please commit or revert changes before checkout other branch.")
-        }
-
-        // check modules
-        repoInfo.moduleInfoMap.each {
-            if (repoInfo.projectInfo.includeModuleList.contains(it.key)) return
-
-            File moduleDir = RepoUtils.getModuleDir(projectDir, it.value)
-            if (!GitUtils.isGitDir(moduleDir)) return
-
-            isClean = GitUtils.isClean(moduleDir)
-            if (!isClean) {
-                GitUtils.revertRepoFile(projectDir)
-                throw new RuntimeException("[repo] - module '${RepoUtils.getModuleName(projectDir, moduleDir)}': please commit or revert changes before checkout other branch.")
-            }
-        }
     }
 
     void clearSettingsIncludeIfAddNewModule() {
