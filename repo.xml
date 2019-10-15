@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <manifest>
 
-    <default branch="master" fetch="https://github.com/EastWoodYang/" />
+    <default fetch="https://github.com/EastWoodYang/" />
 
     <project origin="Gradle-Repo.git">
 

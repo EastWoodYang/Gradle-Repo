@@ -2,7 +2,7 @@ package com.eastwood.tools.plugins.repo.model
 
 class RepoInfo {
 
-    RepositoryInfo defaultInfo
+    RemoteInfo defaultInfo
     ProjectInfo projectInfo
     Map<String, ModuleInfo> moduleInfoMap
 

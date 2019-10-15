@@ -1,10 +1,8 @@
 package com.eastwood.tools.plugins.repo.model
 
-class RepositoryInfo {
+class RemoteInfo {
 
     String fetchUrl
     String pushUrl
-
-    String branch
 
 }

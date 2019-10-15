@@ -3,7 +3,13 @@ package com.eastwood.tools.plugins.repo.model
 class ModuleInfo {
     String name
     String local
-    RepositoryInfo repositoryInfo
+
+    RemoteInfo remoteInfo
+
+    String branch
+
+    boolean hide
+
     String substitute
 
     Map<String, List<Dependency>> dependencyMap

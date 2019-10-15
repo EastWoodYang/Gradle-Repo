@@ -20,6 +20,17 @@ class GitUtils {
         }
     }
 
+    static void removeRemote(File dir) {
+        def fetchUrl = getOriginRemoteFetchUrl(dir)
+        if (fetchUrl == null) return
+
+        def process = ("git remote remove origin").execute(null, dir)
+        def result = process.waitFor()
+        if (result != 0) {
+            throw new RuntimeException("[repo] - failure to execute git command [git remote remove origin] under ${dir.absolutePath}\nmessage: ${process.err.text}")
+        }
+    }
+
     static void clone(File dir, String url, String branchName) {
         def process = ("git clone --branch $branchName $url -l $dir.name").execute(null, dir.parentFile)
         def result = process.waitFor()
@@ -65,9 +76,6 @@ class GitUtils {
                 url = it.replace('origin', '').replace('(fetch)', '').trim()
             }
         }
-        if (url == null) {
-            throw new RuntimeException("[repo] - failure to get origin remote fetch url.")
-        }
         return url
     }
 
@@ -83,9 +91,6 @@ class GitUtils {
             if (it.startsWith('origin') && it.endsWith('(push)')) {
                 url = it.replace('origin', '').replace('(push)', '').trim()
             }
-        }
-        if (url == null) {
-            throw new RuntimeException("[repo] - failure to get origin remote push url.")
         }
         return url
     }
@@ -223,8 +228,9 @@ class GitUtils {
         List<String> ignoreModules = new ArrayList<>()
         List<String> includeModules = new ArrayList<>()
 
-        ignoreModules.add('repo-local.xml')
+        ignoreModules.add('.repo')
         ignoreModules.add('.idea/')
+        ignoreModules.add('.iml')
         ignoreModules.add('*.iml')
 
         repoInfo.moduleInfoMap.each {
@@ -244,13 +250,15 @@ class GitUtils {
 
         File excludeFile = new File(projectDir, '.git/info/exclude')
         String exclude = ""
-        excludeFile.eachLine {
-            def item = it.trim()
-            if (includeModules.contains(item)) {
-                return
+        if (excludeFile.exists()) {
+            excludeFile.eachLine {
+                def item = it.trim()
+                if (includeModules.contains(item)) {
+                    return
+                }
+                ignoreModules.remove(item)
+                exclude += item + "\n"
             }
-            ignoreModules.remove(item)
-            exclude += item + "\n"
         }
         ignoreModules.each {
             exclude += it + "\n"
@@ -259,18 +267,54 @@ class GitUtils {
     }
 
     static void addExclude(File dir) {
-        List<String> ignoreModules = new ArrayList<>()
-        ignoreModules.add('build/')
-        ignoreModules.add('*.iml')
+        List<String> ignoreList = new ArrayList<>()
+        ignoreList.add('build/')
+        ignoreList.add('.iml')
+        ignoreList.add('*.iml')
 
         File excludeFile = new File(dir, '.git/info/exclude')
-        if (!excludeFile.exists()) return
-
-        String exclude = excludeFile.text + "\n"
-        ignoreModules.each {
+        String exclude = ""
+        if (excludeFile.exists()) {
+            excludeFile.eachLine {
+                def item = it.trim()
+                ignoreList.remove(item)
+                exclude += item + "\n"
+            }
+        }
+        ignoreList.each {
             exclude += it + "\n"
         }
         excludeFile.write(exclude)
+    }
+
+    static void addMergeAttribute(File dir) {
+        def repoLocal = 'repo-local.xml merge=ours'
+
+        File attributesFile = new File(dir, '.git/info/attributes')
+        if (!attributesFile.exists()) {
+            attributesFile.write(repoLocal)
+            return
+        }
+
+        boolean added = false
+        def attributes = ''
+        attributesFile.eachLine {
+            def item = it.trim()
+            attributes += item + "\n"
+            if (item == repoLocal) {
+                added = true
+            }
+        }
+        if (!added) {
+            attributes += repoLocal + "\n"
+            attributesFile.write(attributes)
+
+            def process = ("git config --global merge.ours.driver true").execute(null, dir)
+            def result = process.waitFor()
+            if (result != 0) {
+                throw new RuntimeException("[repo] - failure to execute git command [git config --global merge.ours.driver true] under ${dir.absolutePath}\n message: ${process.err.text}")
+            }
+        }
     }
 
 }
