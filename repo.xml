@@ -18,6 +18,8 @@
 
     <module name="mylibrary" origin="gradle-repo-mylibrary.git" />
 
+    <module name="mylibrary2" origin="gradle-repo-mylibrary2.git" />
+
     <module name="mylibrary3" />
 
 </manifest>

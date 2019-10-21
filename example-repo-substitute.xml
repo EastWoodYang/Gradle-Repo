@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<manifest>
+
+    ...
+
+    <module name="library" branch="xxx" origin="xxx/xxx.git" substitute="xxx.xxx.xxx:xxx:x.x.x" />
+
+</manifest>

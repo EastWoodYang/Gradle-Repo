@@ -10,6 +10,8 @@ buildscript {
     }
 }
 
+//ext.disableLocalRepo = true
+
 if (buildscript.dependencies.ext.hasGenerated) {
-    apply plugin: 'gradle-repo-settings'
+    apply plugin: 'gradle-repo'
 }

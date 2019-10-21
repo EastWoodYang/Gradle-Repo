@@ -26,4 +26,4 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
-apply plugin: 'gradle-repo-build'
+apply plugin: 'gradle-repo'
