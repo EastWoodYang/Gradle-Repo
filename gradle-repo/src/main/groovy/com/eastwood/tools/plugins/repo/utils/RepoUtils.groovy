@@ -9,15 +9,10 @@ import org.w3c.dom.NodeList
 
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
-import javax.xml.transform.OutputKeys
-import javax.xml.transform.Transformer
-import javax.xml.transform.TransformerFactory
-import javax.xml.transform.dom.DOMSource
-import javax.xml.transform.stream.StreamResult
 
 class RepoUtils {
 
-    static RepoInfo getRepoInfo(File projectDir, boolean withDependencies) {
+    static RepoInfo getRepoInfo(File projectDir, boolean withDependencies, boolean disableLocalRepo) {
         File repoFile = new File(projectDir, 'repo.xml')
         if (!repoFile.exists()) {
             throw new GradleException("[repo] - repo.xml not found under " + projectDir.absolutePath)
@@ -25,9 +20,11 @@ class RepoUtils {
 
         RepoInfo repoInfo = parseRepo(repoFile, withDependencies)
 
-        File repoLocalFile = new File(projectDir, 'repo-local.xml')
-        if (repoLocalFile.exists()) {
-            parseRepoLocal(repoInfo, repoLocalFile, withDependencies)
+        if (!disableLocalRepo) {
+            File repoLocalFile = new File(projectDir, 'repo-local.xml')
+            if (repoLocalFile.exists()) {
+                parseRepoLocal(repoInfo, repoLocalFile, withDependencies)
+            }
         }
         return repoInfo
     }
@@ -120,7 +117,6 @@ class RepoUtils {
             moduleInfo.hide = true
         }
 
-
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance()
         DocumentBuilder builder = factory.newDocumentBuilder()
         FileInputStream inputStream = new FileInputStream(repoLocalFile)
@@ -130,39 +126,17 @@ class RepoUtils {
         NodeList moduleNodeList = rootElement.getElementsByTagName("module")
         for (int i = 0; i < moduleNodeList.getLength(); i++) {
             Element moduleElement = (Element) moduleNodeList.item(i)
-
-            String name = moduleElement.getAttribute('name')
-            if (repoInfo.moduleInfoMap.containsKey(name)) {
-                ModuleInfo moduleInfo = repoInfo.moduleInfoMap.get(name)
-                moduleInfo.hide = false
-                if (withDependencies) {
-                    if (moduleInfo.dependencyMap == null) {
-                        moduleInfo.dependencyMap = new HashMap<>()
+            ModuleInfo moduleInfo = getModuleInfo(repoInfo.defaultInfo, moduleElement)
+            if (withDependencies) {
+                moduleInfo.dependencyMap = getModuleDependenciesInfo(moduleElement)
+                if (!moduleInfo.substitute.trim().isEmpty()) {
+                    if (repoInfo.substituteMap == null) {
+                        repoInfo.substituteMap = new HashMap<>()
                     }
-                    Map<String, List<Dependency>> dependenciesMap = getModuleDependenciesInfo(moduleElement)
-                    dependenciesMap.each {
-                        List<Dependency> dependencies = moduleInfo.dependencyMap.get(it.key)
-                        if (dependencies == null) {
-                            dependencies = new ArrayList<>()
-                            moduleInfo.dependencyMap.put(it.key, dependencies)
-                        }
-                        dependencies.addAll(it.value)
-                    }
+                    repoInfo.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
                 }
-            } else {
-                ModuleInfo moduleInfo = getModuleInfo(repoInfo.defaultInfo, moduleElement)
-                moduleInfo.fromLocal = true
-                if (withDependencies) {
-                    moduleInfo.dependencyMap = getModuleDependenciesInfo(moduleElement)
-                    if (!moduleInfo.substitute.trim().isEmpty()) {
-                        if (repoInfo.substituteMap == null) {
-                            repoInfo.substituteMap = new HashMap<>()
-                        }
-                        repoInfo.substituteMap.put(moduleInfo.name, moduleInfo.substitute)
-                    }
-                }
-                repoInfo.moduleInfoMap.put(moduleInfo.name, moduleInfo)
             }
+            repoInfo.moduleInfoMap.put(moduleInfo.name, moduleInfo)
         }
     }
 
@@ -333,149 +307,4 @@ class RepoUtils {
         return ""
     }
 
-    static RepoInfo getLastRepoManifest(File rootProjectDir) {
-        RepoInfo repoInfo = new RepoInfo()
-        repoInfo.moduleInfoMap = new HashMap<>()
-        File lastRepoManifest = new File(rootProjectDir, '.repo/lastRepoManifest.xml')
-        if (!lastRepoManifest.exists()) {
-            return repoInfo
-        }
-
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance()
-        DocumentBuilder builder = factory.newDocumentBuilder()
-        FileInputStream inputStream = new FileInputStream(lastRepoManifest)
-        Document doc = builder.parse(inputStream)
-        Element rootElement = doc.getDocumentElement()
-
-        ProjectInfo projectInfo = new ProjectInfo()
-        // project remoteInfo info
-        NodeList projectNodeList = rootElement.getElementsByTagName("project")
-        Element projectElement = (Element) projectNodeList.item(0)
-
-        if (!projectElement.getAttribute('fetch').trim().isEmpty()) {
-            RemoteInfo remoteInfo = new RemoteInfo()
-            remoteInfo.fetchUrl = projectElement.getAttribute('fetch')
-            remoteInfo.pushUrl = projectElement.getAttribute('push')
-            if (remoteInfo.pushUrl.trim().isEmpty()) {
-                remoteInfo.pushUrl = remoteInfo.fetchUrl
-            }
-            projectInfo.remoteInfo = remoteInfo
-        }
-        projectInfo.branch = projectElement.getAttribute('branch')
-
-        // project include module
-        projectInfo.includeModuleList = new ArrayList<>()
-        NodeList includeModuleNodeList = projectElement.getElementsByTagName("include")
-        for (int i = 0; i < includeModuleNodeList.getLength(); i++) {
-            Element includeModuleElement = (Element) includeModuleNodeList.item(i)
-            String moduleName = includeModuleElement.getAttribute("name")
-            projectInfo.includeModuleList.add(moduleName.trim())
-        }
-        repoInfo.projectInfo = projectInfo
-
-        NodeList moduleNodeList = rootElement.getElementsByTagName("module")
-        for (int i = 0; i < moduleNodeList.getLength(); i++) {
-            Element moduleElement = (Element) moduleNodeList.item(i)
-
-            ModuleInfo moduleInfo = new ModuleInfo()
-            moduleInfo.name = moduleElement.getAttribute('name')
-            moduleInfo.local = moduleElement.getAttribute('local')
-            moduleInfo.fromLocal = moduleElement.getAttribute('fromLocal')
-
-            if (!moduleElement.getAttribute('fetch').trim().isEmpty()) {
-                RemoteInfo remoteInfo = new RemoteInfo()
-                remoteInfo.fetchUrl = moduleElement.getAttribute('fetch')
-                remoteInfo.pushUrl = moduleElement.getAttribute('push')
-                if (remoteInfo.pushUrl.trim().isEmpty()) {
-                    remoteInfo.pushUrl = remoteInfo.fetchUrl
-                }
-                moduleInfo.remoteInfo = remoteInfo
-            }
-            moduleInfo.branch = moduleElement.getAttribute('branch')
-
-            repoInfo.moduleInfoMap.put(moduleInfo.name, moduleInfo)
-        }
-
-        return repoInfo
-    }
-
-    static void saveRepoManifest(File rootProjectDir, RepoInfo repoInfo) {
-        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance()
-        Document document = builderFactory.newDocumentBuilder().newDocument()
-        Element manifestElement = document.createElement("manifest")
-
-        Element projectElement = document.createElement("project")
-        manifestElement.appendChild(projectElement)
-
-        if (repoInfo.projectInfo.remoteInfo != null) {
-            projectElement.setAttribute("fetchUrl", repoInfo.projectInfo.remoteInfo.fetchUrl)
-            if (repoInfo.projectInfo.remoteInfo.fetchUrl != repoInfo.projectInfo.remoteInfo.pushUrl) {
-                projectElement.setAttribute("pushUrl", repoInfo.projectInfo.remoteInfo.pushUrl)
-            }
-        }
-        projectElement.setAttribute('branch', repoInfo.projectInfo.branch)
-
-        if (repoInfo.projectInfo.includeModuleList != null) {
-            repoInfo.projectInfo.includeModuleList.each {
-                Element includeElement = document.createElement("include")
-                includeElement.setAttribute("name", it)
-                projectElement.appendChild(includeElement)
-            }
-        }
-
-        repoInfo.moduleInfoMap.each {
-            Element moduleElement = document.createElement("module")
-            manifestElement.appendChild(moduleElement)
-
-            ModuleInfo moduleInfo = it.value
-            moduleElement.setAttribute('name', moduleInfo.name)
-            if (moduleInfo.local != './') {
-                moduleElement.setAttribute('local', moduleInfo.local)
-            }
-            if (moduleInfo.remoteInfo != null && !repoInfo.projectInfo.includeModuleList.contains(moduleInfo.name)) {
-                moduleElement.setAttribute("fetch", moduleInfo.remoteInfo.fetchUrl)
-                if (moduleInfo.remoteInfo.fetchUrl != moduleInfo.remoteInfo.pushUrl) {
-                    moduleElement.setAttribute("pushUrl", moduleInfo.remoteInfo.pushUrl)
-                }
-            }
-            moduleElement.setAttribute('branch', moduleInfo.branch)
-
-            if (moduleInfo.fromLocal) {
-                moduleElement.setAttribute('fromLocal', 'true')
-            }
-        }
-
-        File repoDir = new File(rootProjectDir, '.repo')
-        if (!repoDir.exists()) {
-            repoDir.mkdirs()
-        }
-        File lastRepoManifest = new File(repoDir, 'lastRepoManifest.xml')
-
-        // save
-        Transformer transformer = TransformerFactory.newInstance().newTransformer()
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes")
-        transformer.setOutputProperty(OutputKeys.CDATA_SECTION_ELEMENTS, "yes")
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2")
-        transformer.transform(new DOMSource(manifestElement), new StreamResult(lastRepoManifest))
-    }
-
-    static void addNewModuleElement(File projectDir, String moduleName) {
-        File repoFile = new File(projectDir, 'repo-local.xml')
-        if (!repoFile.exists()) {
-            repoFile = new File(projectDir, 'repo.xml')
-            if (!repoFile.exists()) {
-                return
-            }
-        }
-
-        def content = ''
-        repoFile.readLines('utf-8').each {
-            def line = it.trim()
-            if (line == '</manifest>') {
-                content += "    <module name=\"$moduleName\" />\n"
-            }
-            content += it + '\n'
-        }
-        repoFile.setText(content, 'utf-8')
-    }
 }

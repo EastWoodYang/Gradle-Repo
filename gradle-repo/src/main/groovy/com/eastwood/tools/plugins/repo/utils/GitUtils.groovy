@@ -136,11 +136,6 @@ class GitUtils {
         return branchName
     }
 
-    static boolean isBranchChanged(File dir, String branch) {
-        def currentBranchName = getBranchName(dir)
-        return currentBranchName != branch
-    }
-
     static boolean isClean(File dir) {
         def process = ("git status -s").execute(null, dir)
         def result = process.waitFor()
@@ -193,34 +188,6 @@ class GitUtils {
         def result = process.waitFor()
         if (result != 0) {
             throw new RuntimeException("[repo] - failure to execute git command [git checkout -b $branchName] under ${dir.absolutePath}\n message: ${process.err.text}")
-        }
-    }
-
-    static void commitRepoFile(File dir) {
-        def process = ("git add repo.xml").execute(null, dir)
-        def result = process.waitFor()
-        if (result != 0) {
-            throw new RuntimeException("[repo] - failure to execute git command [git add repo.xml] under ${dir.absolutePath}\n message: ${process.err.text}")
-        }
-
-        commit(dir, "keep repo.xml")
-    }
-
-    static void revertRepoFile(File dir) {
-        def process = ("git status -s repo.xml").execute(null, dir)
-        def result = process.waitFor()
-        if (result != 0) {
-            throw new RuntimeException("[repo] - failure to execute git command [git status -s repo.xml] under ${dir.absolutePath}\n message: ${process.err.text}")
-        }
-        List<String> lines = process.text.readLines()
-        if (lines.isEmpty() || lines.get(0).startsWith('??')) {
-            return
-        }
-
-        process = ("git checkout repo.xml").execute(null, dir)
-        result = process.waitFor()
-        if (result != 0) {
-            throw new RuntimeException("[repo] - failure to execute git command [git checkout repo.xml] under ${dir.absolutePath}\n message: ${process.err.text}")
         }
     }
 
@@ -285,36 +252,6 @@ class GitUtils {
             exclude += it + "\n"
         }
         excludeFile.write(exclude)
-    }
-
-    static void addMergeAttribute(File dir) {
-        def repoLocal = 'repo-local.xml merge=ours'
-
-        File attributesFile = new File(dir, '.git/info/attributes')
-        if (!attributesFile.exists()) {
-            attributesFile.write(repoLocal)
-            return
-        }
-
-        boolean added = false
-        def attributes = ''
-        attributesFile.eachLine {
-            def item = it.trim()
-            attributes += item + "\n"
-            if (item == repoLocal) {
-                added = true
-            }
-        }
-        if (!added) {
-            attributes += repoLocal + "\n"
-            attributesFile.write(attributes)
-
-            def process = ("git config --global merge.ours.driver true").execute(null, dir)
-            def result = process.waitFor()
-            if (result != 0) {
-                throw new RuntimeException("[repo] - failure to execute git command [git config --global merge.ours.driver true] under ${dir.absolutePath}\n message: ${process.err.text}")
-            }
-        }
     }
 
 }

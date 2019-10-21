@@ -14,23 +14,26 @@ class RepoSettingsPlugin implements Plugin<Settings> {
     File projectDir
 
     void apply(Settings settings) {
+        def disableLocalRepo = false
+        if (settings.ext.has('disableLocalRepo')) {
+            disableLocalRepo = settings.ext.disableLocalRepo
+        }
+        settings.gradle.metaClass.disableLocalRepo = disableLocalRepo
+
         this.settings = settings
         projectDir = settings.rootProject.projectDir
 
-        def repoModulesDir = new File(projectDir, '.repo/modules')
+        def repoModulesDir = new File(projectDir, '.idea/modules')
         if (!repoModulesDir.exists()) {
             repoModulesDir.mkdirs()
         }
 
-        RepoInfo lastRepoInfo = RepoUtils.getLastRepoManifest(projectDir)
-        RepoInfo repoInfo = RepoUtils.getRepoInfo(projectDir, false)
+        RepoInfo repoInfo = RepoUtils.getRepoInfo(projectDir, false, disableLocalRepo)
 
         boolean initialized = GitUtils.isGitDir(projectDir)
         if (!initialized) {
             GitUtils.init(projectDir)
         }
-
-        GitUtils.addMergeAttribute(projectDir)
 
         RemoteInfo projectRemoteInfo = repoInfo.projectInfo.remoteInfo
         setRemote(projectDir, projectRemoteInfo)
@@ -58,25 +61,32 @@ class RepoSettingsPlugin implements Plugin<Settings> {
             if (moduleInfo.hide) {
                 if (moduleDir.exists()) {
                     if (GitUtils.isGitDir(moduleDir)) {
-                        if (GitUtils.isClean(moduleDir)) {
-                            new File(moduleDir, 'build').deleteDir()
-                            new File(moduleDir, moduleDir.name + '.iml').delete()
+                        if (!GitUtils.isClean(moduleDir)) {
+                            throw new RuntimeException("[repo] - module '$moduleName': please commit or revert changes before it been removed to .repo/modules.")
+                        }
+                        moduleDir.eachFile {
+                            if (it.name == 'build') {
+                                it.deleteDir()
+                            } else if (it.name.endsWith('.iml')) {
+                                it.delete()
+                            }
+                        }
 
-                            def targetDir = RepoUtils.getModuleDir(repoModulesDir, moduleInfo)
-                            boolean result = targetDir.deleteDir()
-                            if (!result) {
-                                throw new RuntimeException("[repo] - module '$moduleName': please sync again.")
+                        def targetDir = RepoUtils.getModuleDir(repoModulesDir, moduleInfo)
+                        if (targetDir.exists()) {
+                            if (targetDir.list().size() == 0) {
+                                def result = targetDir.deleteDir()
+                                if (!result) {
+                                    throw new RuntimeException("[repo] - module '$moduleName': failure to delete $targetDir.absolutePath.")
+                                }
+                            } else {
+                                throw new RuntimeException("[repo] - module '$moduleName': unable to move module to $targetDir.absolutePath, because it is not empty.")
                             }
-                            result = moduleDir.renameTo(targetDir)
-                            if (!result) {
-                                throw new RuntimeException("[repo] - module '$moduleName': please sync again.")
-                            }
-                            result = moduleDir.deleteDir()
-                            if (!result) {
-                                throw new RuntimeException("[repo] - module '$moduleName': please sync again.")
-                            }
-                        } else {
-                            throw new RuntimeException("[repo] - module '$moduleName': please commit or revert changes.")
+                        }
+
+                        def result = moduleDir.renameTo(targetDir)
+                        if (!result) {
+                            throw new RuntimeException("[repo] - module '$moduleName': failure to rename $moduleDir.absolutePath to $targetDir.absolutePath.")
                         }
                     }
                 }
@@ -84,24 +94,30 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 moduleDir = RepoUtils.getModuleDir(repoModulesDir, moduleInfo)
                 settings.project(moduleName).projectDir = moduleDir
             } else {
-                if (moduleDir.exists()) {
-                    if (moduleDir.list().size() == 0) {
-                        println '-- 1'
-                        moduleDir.deleteDir()
-                    }
-                }
-
                 def targetDir = RepoUtils.getModuleDir(repoModulesDir, moduleInfo)
                 if (targetDir.exists() && targetDir.list().size() > 0) {
-                    new File(targetDir, 'build').deleteDir()
-                    new File(targetDir, 'modules-' + targetDir.name + '.iml').delete()
+                    targetDir.eachFile {
+                        if (it.name == 'build') {
+                            it.deleteDir()
+                        } else if (it.name.endsWith('.iml')) {
+                            it.delete()
+                        }
+                    }
+
+                    if (moduleDir.exists()) {
+                        if (moduleDir.list().size() == 0) {
+                            def result = moduleDir.deleteDir()
+                            if (!result) {
+                                throw new RuntimeException("[repo] - module '$moduleName': failure to delete $moduleDir.absolutePath.")
+                            }
+                        } else {
+                            throw new RuntimeException("[repo] - module '$moduleName': unable to move module to $moduleDir.absolutePath, because it is not empty.")
+                        }
+                    }
+
                     def result = targetDir.renameTo(moduleDir)
                     if (!result) {
-                        throw new RuntimeException("[repo] - module '$moduleName': please sync again.")
-                    }
-                    result = targetDir.deleteDir()
-                    if (!result) {
-                        throw new RuntimeException("[repo] - module '$moduleName': please sync again.")
+                        throw new RuntimeException("[repo] - module '$moduleName': failure to rename $targetDir.absolutePath to $moduleDir.absolutePath.")
                     }
                 }
             }
@@ -147,28 +163,22 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                     }
                 } else {
                     RemoteInfo remoteInfo = moduleInfo.remoteInfo
-                    if (remoteInfo == null) {
+                    if (moduleDir.list().size() > 0) {
                         GitUtils.init(moduleDir)
-                        GitUtils.addExclude(moduleDir)
-                        return
-                    }
-
-                    ModuleInfo lastModuleInfo = lastRepoInfo.moduleInfoMap.get(moduleInfo.name)
-                    if (lastModuleInfo == null || lastModuleInfo.remoteInfo == null) {
-                        GitUtils.init(moduleDir)
+                        if (remoteInfo != null) {
+                            GitUtils.addRemote(moduleDir, remoteInfo.fetchUrl)
+                        }
                     } else {
-                        if (moduleDir.list().size() > 0) {
-                            throw new RuntimeException("[repo] - module '$moduleName': failure to clone beacause [$moduleDir.absolutePath] is not an empty directory.")
+                        if (remoteInfo != null) {
+                            String originUrl = remoteInfo.fetchUrl
+                            println "[repo] - module '$moduleName': git clone $originUrl --branch $moduleInfo.branch"
+                            GitUtils.clone(moduleDir, originUrl, moduleInfo.branch)
+                            if (remoteInfo.pushUrl != remoteInfo.fetchUrl) {
+                                GitUtils.setOriginRemotePushUrl(moduleDir, remoteInfo.pushUrl)
+                            }
                         }
-
-                        String originUrl = remoteInfo.fetchUrl
-                        println "[repo] - module '$moduleName': git clone $originUrl --branch $moduleInfo.branch"
-                        GitUtils.clone(moduleDir, originUrl, moduleInfo.branch)
-                        if (remoteInfo.pushUrl != remoteInfo.fetchUrl) {
-                            GitUtils.setOriginRemotePushUrl(moduleDir, remoteInfo.pushUrl)
-                        }
-                        GitUtils.addExclude(moduleDir)
                     }
+                    GitUtils.addExclude(moduleDir)
                 }
             } else {
                 moduleDir.mkdirs()
@@ -188,8 +198,6 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         if (initialized) {
             GitUtils.updateExclude(projectDir, repoInfo)
         }
-
-        RepoUtils.saveRepoManifest(projectDir, repoInfo)
     }
 
     void setRemote(File dir, RemoteInfo remoteInfo) {

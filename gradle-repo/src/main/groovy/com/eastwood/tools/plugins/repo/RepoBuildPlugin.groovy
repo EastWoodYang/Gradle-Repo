@@ -17,7 +17,8 @@ class RepoBuildPlugin implements Plugin<Project> {
         projectDir = project.rootProject.projectDir
 
         project.afterEvaluate {
-            RepoInfo repoInfo = RepoUtils.getRepoInfo(projectDir, true)
+            def disableLocalRepo = project.gradle.hasProperty('disableLocalRepo') ? project.gradle.disableLocalRepo : false
+            RepoInfo repoInfo = RepoUtils.getRepoInfo(projectDir, true, disableLocalRepo)
 
             project.getAllprojects().each {
                 def currentProject = it
@@ -26,7 +27,6 @@ class RepoBuildPlugin implements Plugin<Project> {
 
                 if (moduleInfo.dependencyMap.size() > 0) {
                     currentProject.afterEvaluate {
-
                         if (repoInfo.substituteMap != null && !repoInfo.substituteMap.isEmpty()) {
                             currentProject.configurations.all {
                                 it.resolutionStrategy {
@@ -45,6 +45,8 @@ class RepoBuildPlugin implements Plugin<Project> {
                             List<Dependency> dependencyList = it.value
                             dependencyList.each {
                                 ModuleInfo dependencyModuleInfo = repoInfo.moduleInfoMap.get(it.name)
+                                if (dependencyModuleInfo == null) return
+
                                 def moduleDir = RepoUtils.getModuleDir(projectDir, dependencyModuleInfo)
                                 def moduleName = RepoUtils.getModuleName(projectDir, moduleDir)
                                 currentProject.dependencies.add(type, currentProject.project(moduleName))

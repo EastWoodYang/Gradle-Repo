@@ -14,6 +14,4 @@ class ModuleInfo {
 
     Map<String, List<Dependency>> dependencyMap
 
-    boolean fromLocal
-
 }
