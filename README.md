@@ -1,12 +1,11 @@
 
 # Gradle Repo
-用于统一管理Git多仓库及模块间的依赖管理。
+用于统一管理Git多仓库及模块间的依赖关系。
 
 ## Usage
 
 1. 分别在`settings.gradle`和`build.gradle`中添加**gradle-repo**插件。
 
-    ```groovy
     buildscript {
         repositories {
             jcenter()
@@ -17,7 +16,6 @@
     }
 
     apply plugin: 'gradle-repo'
-    ```
   
 2. 创建repo.xml，并根据项目结构及依赖关系转换成xml格式。
 
@@ -34,7 +32,6 @@ repo-local.xml可以理解为`本地模式`。该模式下repo.xml声明的modul
 
 另外，你也可以通过设置`disableLocalRepo`来禁用该模式，比如：
 
-    ```
     setting.gradle
 
     ...
@@ -42,8 +39,6 @@ repo-local.xml可以理解为`本地模式`。该模式下repo.xml声明的modul
     ext.disableLocalRepo = true
 
     apply plugin: 'gradle-repo'
-
-    ```
 
 ## Be Careful
 
