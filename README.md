@@ -1,9 +1,10 @@
 
-# Gradle Repo  
-Gradle Repo is a Gradle plugin. it helps us manage multiple Git repositories and dependencies between modules.  
-  
-## Usage  
-1. Add buildscript dependency in root project **settings.gradle** and apply plugin **gradle-repo-settings**  
+# Gradle Repo
+用于统一管理Git多仓库及模块间的依赖管理。
+
+## Usage
+
+1. 分别在`settings.gradle`和`build.gradle`中添加**gradle-repo**插件。
 
     ```groovy
     buildscript {
@@ -11,52 +12,57 @@ Gradle Repo is a Gradle plugin. it helps us manage multiple Git repositories and
             jcenter()
         }
         dependencies {
-            classpath 'com.eastwood.tools.plugins:gradle-repo:1.0.2'
+            classpath 'com.eastwood.tools.plugins:gradle-repo:1.1.0'
         }
     }
 
-    apply plugin: 'gradle-repo-settings'
+    apply plugin: 'gradle-repo'
     ```
   
-2. Add buildscript dependency in root project **build.gradle** and apply plugin **gradle-repo-build**  
+2. 创建repo.xml，并根据项目结构及依赖关系转换成xml格式。
 
-    ```
-    buildscript {
-        repositories {
-            jcenter()
-        }
-        dependencies {
-            classpath 'com.eastwood.tools.plugins:gradle-repo:1.0.1'
-        }
-    }
+## Take Look
 
-    apply plugin: 'gradle-repo-build'
-    ```
-          
-3. Create repo.xml in root project, and describes the structure and dependency of the repo project.  
-  
-    <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png'/>  
-  
+<img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/1.png' />
   
 ## Repo Manifest Format
 
-[Repo Manifest Format](https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo-Manifest-Format) / [Repo清单格式](https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo%E6%B8%85%E5%8D%95%E6%A0%BC%E5%BC%8F)
-  
-## Gradle Repo plugin for Android Studio  
+[Repo清单格式](https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo%E6%B8%85%E5%8D%95%E6%A0%BC%E5%BC%8F) / [Repo Manifest Format](https://github.com/EastWoodYang/Gradle-Repo/wiki/Repo-Manifest-Format)
 
+## About repo-local.xml
+repo-local.xml可以理解为`本地模式`。该模式下repo.xml声明的module将不会直接出现项目工程中，而是直接被移到`.idea/module`中。也就是说只有repo-local.xml声明的module才会出现在项目工程中。
+
+另外，你也可以通过设置`disableLocalRepo`来禁用该模式，比如：
+
+    ```
+    setting.gradle
+
+    ...
+
+    ext.disableLocalRepo = true
+
+    apply plugin: 'gradle-repo'
+
+    ```
+
+## Be Careful
+
+* **尽量清理掉settings.gradle中的`include`。如果一些模块不想被Gradle Repo管理，当然可以继续使用。**
+
+* **分支切换尽量在根项目上操作，同步的时候，其他模块会自动跟随切换过去。如果有些模块是使用固定的分支，可以在<module />声明中指定`branch`**
+
+## Gradle Repo plugin for Android Studio  
 
 The following features are available:  
   
 * Provides an action which allow you sync and remote origin repository when you modified repo.xml.  
-* Support create Repo Tag, could be find in [VCS] -> [Git] -> [Create Repo Tag...].  
-  
-<img src='https://github.com/EastWoodYang/gradle-repo-idea-plugin/blob/master/pictures/1.png'/>  
+* Support create Repo Tag, could be find in [VCS] -> [Git] -> [Create Repo Tag...].
   
 <img src='https://github.com/EastWoodYang/gradle-repo-idea-plugin/blob/master/pictures/2.png'/>  
   
 **Install Step**:  
 1. open [File] -> [Settings...] -> [plugins] -> [Browse repositories...]  
-2. and search name **Gradle Repo**  
+2. and search name `Gradle Repo`
   
 **Plugin detail**:  
   
@@ -67,21 +73,7 @@ An SCM provider for Jenkins. Projects can use this plugin to only run builds whe
 to list the changes between builds, and to re-create the project state across all repositories for any previous build using a static manifest.  
   
 <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/4.png'/>  
-Plugin detail: https://plugins.jenkins.io/gradle-repo  
-  
-## QA  
-  
-**Don't need to include project in settings.gradle any more ?**  
-  
-    Yes, will automatically add the given module you declared in repo.xml to the build by repo plugin.  
-      
-**How to switch to other feature branches ?**  
-  
-    There are two ways:
-    1. change the name of the default element branch, and then sync it.
-    2. change root project branch through Android Studio Git Branches Panel, and then sync it.
-      
-    Make sure to commit the code before switch.
+Plugin detail: https://plugins.jenkins.io/gradle-repo
   
 ## License  
 ```  
