@@ -6,16 +6,18 @@
 
 1. 分别在`settings.gradle`和`build.gradle`中添加**gradle-repo**插件。
 
-    buildscript {
-        repositories {
-            jcenter()
-        }
-        dependencies {
-            classpath 'com.eastwood.tools.plugins:gradle-repo:1.1.0'
-        }
+```
+buildscript {
+    repositories {
+        jcenter()
     }
+    dependencies {
+        classpath 'com.eastwood.tools.plugins:gradle-repo:1.1.0'
+    }
+}
+```
 
-    apply plugin: 'gradle-repo'
+apply plugin: 'gradle-repo'
   
 2. 创建repo.xml，并根据项目结构及依赖关系转换成xml格式。
 
@@ -32,13 +34,15 @@ repo-local.xml可以理解为`本地模式`。该模式下repo.xml声明的modul
 
 另外，你也可以通过设置`disableLocalRepo`来禁用该模式，比如：
 
-    setting.gradle
+```
+setting.gradle
 
-    ...
+...
 
-    ext.disableLocalRepo = true
+ext.disableLocalRepo = true
 
-    apply plugin: 'gradle-repo'
+apply plugin: 'gradle-repo'
+```
 
 ## Be Careful
 
