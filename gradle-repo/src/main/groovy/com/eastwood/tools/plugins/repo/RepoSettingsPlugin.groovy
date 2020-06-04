@@ -23,7 +23,7 @@ class RepoSettingsPlugin implements Plugin<Settings> {
         this.settings = settings
         projectDir = settings.rootProject.projectDir
 
-        def repoModulesDir = new File(projectDir, '.idea/modules')
+        def repoModulesDir = new File(projectDir, '.idea/repoModules')
         if (!repoModulesDir.exists()) {
             repoModulesDir.mkdirs()
         }
