@@ -74,6 +74,10 @@ to list the changes between builds, and to re-create the project state across al
 <img src='https://github.com/EastWoodYang/gradle-repo/blob/master/picture/4.png'/>  
 Plugin detail: https://plugins.jenkins.io/gradle-repo
   
+  
+## Question or Idea
+有问题或想法可以直接加我微信: EastWoodYang
+  
 ## License  
 ```  
    Copyright 2018 EastWood Yang  
