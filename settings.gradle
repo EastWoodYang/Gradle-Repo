@@ -1,17 +1,28 @@
-includeBuild('gradle-repo')
+//includeBuild('gradle-repo')
+//
+//buildscript {
+//    dependencies {
+//        def jar = file('./gradle-repo/build/libs/gradle-repo.jar')
+//        ext.hasGenerated = jar.exists()
+//        if (ext.hasGenerated) {
+//            classpath files(jar)
+//        }
+//    }
+//}
+//
+////ext.disableLocalRepo = true
+//
+//if (buildscript.dependencies.ext.hasGenerated) {
+//    apply plugin: 'gradle-repo'
+//}
 
 buildscript {
+    repositories {
+        jcenter()
+    }
     dependencies {
-        def jar = file('./gradle-repo/build/libs/gradle-repo.jar')
-        ext.hasGenerated = jar.exists()
-        if (ext.hasGenerated) {
-            classpath files(jar)
-        }
+        classpath 'com.eastwood.tools.plugins:gradle-repo:1.2.0'
     }
 }
 
-//ext.disableLocalRepo = true
-
-if (buildscript.dependencies.ext.hasGenerated) {
-    apply plugin: 'gradle-repo'
-}
+apply plugin: 'gradle-repo'
