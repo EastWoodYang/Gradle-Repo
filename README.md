@@ -15,9 +15,9 @@ buildscript {
         classpath 'com.eastwood.tools.plugins:gradle-repo:1.2.0'
     }
 }
-```
 
 apply plugin: 'gradle-repo'
+```
   
 2. 创建repo.xml，并根据项目结构及依赖关系转换成xml格式。
 
