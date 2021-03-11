@@ -22,4 +22,6 @@
 
     <module name="mylibrary3" />
 
+    <module name="buildSrc" />
+
 </manifest>

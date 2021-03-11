@@ -12,7 +12,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.eastwood.tools.plugins:gradle-repo:1.2.0'
+        classpath 'com.eastwood.tools.plugins:gradle-repo:1.2.1'
     }
 }
 

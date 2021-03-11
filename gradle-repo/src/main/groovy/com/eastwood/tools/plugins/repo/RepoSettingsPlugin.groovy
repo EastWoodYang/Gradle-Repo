@@ -50,8 +50,10 @@ class RepoSettingsPlugin implements Plugin<Settings> {
             def moduleDir = RepoUtils.getModuleDir(projectDir, moduleInfo)
             def moduleName = RepoUtils.getModuleName(projectDir, moduleDir)
 
-            // include
-            settings.include moduleName
+            if(!moduleName.equals(":buildSrc")) {
+                // include
+                settings.include moduleName
+            }
 
             if (repoInfo.projectInfo.includeModuleList.contains(moduleInfo.name)) {
                 GitUtils.clearGitDir(moduleDir)
@@ -92,7 +94,9 @@ class RepoSettingsPlugin implements Plugin<Settings> {
                 }
 
                 moduleDir = RepoUtils.getModuleDir(repoModulesDir, moduleInfo)
-                settings.project(moduleName).projectDir = moduleDir
+                if(!moduleName.equals(":buildSrc")) {
+                    settings.project(moduleName).projectDir = moduleDir
+                }
             } else {
                 def targetDir = RepoUtils.getModuleDir(repoModulesDir, moduleInfo)
                 if (targetDir.exists() && targetDir.list().size() > 0) {
